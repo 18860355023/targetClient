@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}目标检测平台-检查{% endblock %}
+{% block nav_title %}目标检测标注平台--检查{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="/static/css/root.css">
+{% endblock %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left" id="usn"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block content %}
+    <div id="mainDiv" class="clearfix" style="background-color:#fff;">
+        <div style="margin-top: 40px;">
+            <table class="table table-hover table-bordered table-striped" id="taskInfo">
+                <thead>
+                <tr>
+                    <th>task-time</th>
+                    <th>task-name</th>
+                    <th>task-path</th>
+                    <th>target-user-status</th>
+                    <th>target-labels</th>
+                    <th>file-num</th>
+                    <th>task-status</th>
+                    <th>option</th>
+                </tr>
+                </thead>
+                <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto">
+                {% for task in data.task_list %}
+                    <tr>
+                        <td>{{ task.addtime }}</td>
+                        <td>{{ task.task_name }}</td>
+                        <td>{{ task.task_path }}</td>
+                        <td>{{ task.target_user_status }}</td>
+                        <td>{{ task.task_name.split('_')[-1] }}</td>
+                        <td>{{ task.file_num }}</td>
+                        {% if task.task_status=='unfinished' %}
+                            <td style="color: salmon;">{{ task.task_status }}</td>
+                            <td class="status">
+                                <button style="border: 0" class="btn-success" onclick="checkTarget($(this))">check
+                                </button>
+                                <button style="border: 0" class="btn-danger" onclick="submitTask($(this))">submit
+                                </button>
+                            </td>
+                        {% else %}
+                            <td style="color: green;">{{ task.task_status }}</td>
+                            <td class="status">
+                                <button disabled style="border: 0" class="btn-default">check</button>
+                                <button disabled style="border: 0" class="btn-default">submit</button>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function changeTask(id) {
+            console.log(document.getElementById(id).value);
+            $.ajax({
+                url: '/task_detail',
+                method: 'post',
+                data: {'path': document.getElementById(id).value},
+                success: function (data) {
+                    console.log(data);
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td>' + data[task]['name'] + '</td><td>' + data[task]['user'] + '</td><td>' + data[task]['path'] + '</td><td>' + data[task]['num'] + '<td>' + data[task]['status'] + '</td></tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                }
+            })
+        }
+
+
+        function checkTarget($this) {
+            var open_path = $this.parent().siblings()[2].innerText;
+            var cate_str = $this.parent().siblings()[4].innerText.split('-').join(',');
+            var name_list = [];
+            var uList = $this.parent().siblings()[3].innerText.split(',');
+            for (var u in uList) {
+                name_list.push(uList[u].split('_')[0])
+            }
+            var stc = $this.parent().siblings()[3].innerText.indexOf('false');
+            if (stc != -1) {
+                alert('标注尚未全部完成,请通知标注人员尽快完成标注')
+            } else {
+                var cmd = new ActiveXObject("WScript.Shell");
+                cmd.run('cmd.exe /c labelme ' + open_path + ' --labels ' + cate_str + ' --nodata --autosave --output ' + open_path, 0);
+            }
+        }
+
+
+        function submitTask($this) {
+            var path = $this.parent().siblings()[2].innerText;
+            var target_user = $this.parent().siblings()[3].innerText.split(',');
+            var uList= [];
+            for(var i in target_user){
+                uList.push(target_user[i].split('_')[0])
+            }
+
+            $.ajax({
+                url: '/submit_task',
+                method: 'post',
+                data: {'path': path, 'user_list': JSON.stringify(uList)},
+                success: function (data) {
+                    console.log(data);
+                    if (data=='ok'){
+                        location.reload()
+                    }
+                }
+            })
+
+        }
+
+
+    </script>
+{% endblock %}

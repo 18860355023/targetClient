@@ -1,0 +1,189 @@
+{% extends 'target-check/base.html' %}
+{% block title %}目标检测平台-标注{% endblock %}
+{% block nav_title %}目标检测平台--标注{% endblock %}
+{% block style %}
+    <style>
+        thead {
+            width: calc(100% - 1em);
+        }
+
+        th.last {
+            width: 17px;
+        }
+
+        thead, tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody {
+            display: block;
+            height: calc(100vh - 300px);
+            overflow-y: scroll;
+        }
+
+        tbody > tr > td, tbody > tr > th {
+            line-height: 2em;
+            white-space: nowrap;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        thead th {
+            border: none;
+        }
+
+        .select-box {
+            position: fixed;
+            height: 200px;
+            width: 300px;
+            background-color: gainsboro;
+            top: calc(50% - 150px);
+            left: calc(50% - 150px);
+            box-shadow: 0 10px 14px rgba(0, 0, 0, .12);
+            padding: 20px;
+            display: none;
+        }
+
+        .ex-img-dir {
+            width: 100%;
+        {#height: 36px;#} border: 0;
+        }
+
+        .nb {
+            border: 0;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <div id="mainDiv" class="clearfix" style="background-color:#fff;">
+        <div class="clearfix">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Path</th>
+                    {#                    <th>TaskImgDir</th>#}
+                    <th>Category</th>
+                    {#                    <th>CheckUser</th>#}
+                    <th>Status</th>
+                    <th>IsRepeat</th>
+                    <th>Option</th>
+                    <th style="width: 17px"></th>
+                </tr>
+                </thead>
+                <tbody id="emp">
+                {% for task in data.task_list %}
+                    <tr>
+                        <td>{{ task.addtime }}</td>
+                        <td title="{{ task.task_path }}">{{ task.task_path }}</td>
+                        <td>{{ task.cates }}</td>
+                        <td class="status" style="color: seagreen;">{{ task.task_status }}</td>
+                        <td>{{ task.is_repeat }}</td>
+                        <td>
+                            <button class="btn-success nb" onclick="checkTarget($(this))">open</button>
+                            <button class="btn-info nb" onclick="submitTask($(this))">submit</button>
+                            <button class="btn-danger nb" onclick="trainsit($(this))">transit</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+
+        function openLabelMe($this) {
+            {#var cmd = new ActiveXObject("WScript.Shell");#}
+            {#cmd.run('cmd.exe /c labelme C:\\Users\\Whu\\Desktop\\target-version\\version3\\test-image-dir\\images', 0);#}
+            {#var user = $('#usn').text();#}
+            var i_path = $this.parent().siblings().get(1).innerText.split('\\');
+            var cates = $this.parent().siblings().get(2).innerText;
+            i_path.pop();
+            var open_path = i_path.join('\\') + '\\images';
+            var save_path = i_path.join('\\') + '\\transit-json';
+            console.log(open_path, save_path);
+
+            try {
+                var cmd = new ActiveXObject("WScript.Shell");
+                cmd.run('cmd.exe /c labelme ' + open_path + ' --labels ' + cates + ' --nodata --autosave --output ' + save_path, 0);
+            } catch (e) {
+                alert('当前浏览器不兼容,请使用IE浏览器')
+            }
+        }
+
+        function changeTask(id) {
+            console.log(document.getElementById(id).value);
+            $.ajax({
+                url: '/task_detail',
+                method: 'post',
+                data: {'path': document.getElementById(id).value},
+                success: function (data) {
+                    console.log(data);
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td>' + data[task]['name'] + '</td><td>' + data[task]['user'] + '</td><td>' + data[task]['path'] + '</td><td>' + data[task]['num'] + '<td>' + data[task]['status'] + '</td></tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                }
+            })
+        }
+
+
+        function checkTarget($this) {
+            var i_path = $this.parent().siblings().get(1).innerText.split('\\');
+            var cates = $this.parent().siblings().get(2).innerText;
+            i_path.pop();
+            var open_path = i_path.join('\\') + '\\images';
+            var save_path = i_path.join('\\') + '\\transit-json';
+            console.log(open_path, save_path);
+
+            try {
+                var cmd = new ActiveXObject("WScript.Shell");
+                cmd.run('cmd.exe /c labelme ' + open_path + ' --labels ' + cates + ' --nodata --autosave --output ' + save_path, 0);
+            } catch (e) {
+                alert('当前浏览器不兼容,请使用IE浏览器')
+            }
+        }
+
+        /**
+         function submitTask($this) {
+            var i_path = $this.parent().siblings().get(1).innerText.split('\\');
+            {#var cates = $this.parent().siblings().get(2).innerText;#}
+            i_path.pop();
+            {#var open_path = i_path.join('\\') + '\\images';#}
+            var json_path = i_path.join('\\') + '\\transit-json';
+            console.log(json_path);
+            $.ajax({
+                url: '/submit_task',
+                method: 'post',
+                data: {'path': json_path},
+                success: function (data) {
+                    console.log(data);
+                    if (data == 'ok') {
+                        {#location.reload()#}
+                    }
+                }
+            });
+        }
+         **/
+        function submitTask($this) {
+            {#var i_path = $this.parent().siblings().get(1).innerText.split('\\');#}
+            var i_path = $this.parent().siblings().get(1).innerText;
+            $.ajax({
+                url: '/submit_task',
+                method: 'post',
+                data: {'path': i_path},
+                success: function (data) {
+                    console.log(data);
+                    if (data == 'ok') {
+                        {#location.reload()#}
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

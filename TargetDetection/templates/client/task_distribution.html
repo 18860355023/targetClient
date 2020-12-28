@@ -1,0 +1,372 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        .se-box {
+            height: 150px;
+            overflow: auto;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+        }
+
+        .set-box {
+            height: 110px;
+            overflow: auto;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+        }
+
+        .se-box::-webkit-scrollbar, .set-box::-webkit-scrollbar {
+            width: 0;
+        }
+
+        .cate-select-title {
+            margin-top: 50px;
+            width: calc(100vw - 850px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+            overflow-x: auto;
+        }
+
+        .opt {
+            text-align: center;
+            color: grey;
+            cursor: pointer;
+        }
+
+        .tip-msg {
+            display: none;
+            color: red;
+            margin-left: 20px;
+            height: 34px;
+            line-height: 34px
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <div class="clearfix" style="margin: 0">
+        <form style="width: 280px;margin: 10px 40px 40px 10px;height: calc(100vh - 200px);overflow: auto"
+              class="pull-left clearfix">
+            <div class="form-group" style="margin-top: 40px;">
+                <label for="fPath">选取原始数据集路径:</label>
+                <select class="form-control" name="" id="fPath" style="width:260px;overflow: hidden">
+                    {% for fp in data.n_paths %}
+                        <option value="{{ fp.set_path }}">{{ fp.set_path }}</option>
+                    {% endfor %}
+                </select>
+                <p id="path-error" style="color:red;font-size: 10px;"></p>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注人员:</label>
+                <div class="se-box">
+                    {% for user in range(0,data.target_users | length,2) %}
+                        <div class="clearfix">
+                            {% if data.target_users[user] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user][0] }}"> {{ data.target_users[user][0] }}
+                                </p>
+                            {% endif %}
+                            {% if data.target_users[user + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user + 1][0] }}"> {{ data.target_users[user + 1][0] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注类别:</label>
+                <div id="cateDiv" class="se-box" style="">
+                    {% for cate in range(0,data.cates|length,2) %}
+                        <div class="clearfix">
+                            {% if data.cates[cate] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.cates[cate].category_name }}"> {{ data.cates[cate].category_name }}
+                                </p>
+                            {% endif %}
+                            {% if data.cates[cate + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.cates[cate + 1].category_name }}"> {{ data.cates[cate + 1].category_name }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">选择检查人员:</label>
+                <div class="set-box" style="">
+                    {% for user in range(0,data.check_users | length,2) %}
+                        <div class="clearfix">
+                            {% if data.check_users[user] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="radio" name="chc"
+                                           value="{{ data.check_users[user][0] }}"> {{ data.check_users[user][0] }}
+                                </p>
+                            {% endif %}
+                            {% if data.check_users[user + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="radio" name="chc"
+                                           value="{{ data.check_users[user + 1][0] }}"> {{ data.check_users[user + 1][0] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">是否交叉标注:</label>
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="true"> 是
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="false" checked>
+                否
+            </div>
+            <p class="none-error" style="color:red;font-size: 10px;"></p>
+            <div class="form-group">
+                <button type="button" class="btn btn-info form-control" onclick="assignedTask()">随机均等分配任务</button>
+            </div>
+        </form>
+
+        <div class="pull-left cate-select-title">
+            <form class="form-inline clearfix">
+                <p class="form-group pull-left" style="margin-right: 100px;">
+                    <select name="filter" id="" class="form-control" onchange="filterLabel($(this))">
+                        <option value="time" selected>按时间筛选</option>
+                        <option value="name">按检查用户名筛选</option>
+                    </select>
+                </p>
+                <div class="form-group filter-time pull-left">
+                    <label for="startTime">start time</label>
+                    <input type="date" class="form-control" id="startTime" placeholder="开始时间">
+                    <label for="endTime">end time</label>
+                    <input type="date" class="form-control" id="endTime" placeholder="结束时间">
+                    <div class="btn btn-info" onclick="filterTime()">search</div>
+                </div>
+                <div class="form-inline filter-name pull-left"
+                     style="border: 1px solid gainsboro;height:34px;display: none">
+                    {% for user in data.check_users %}
+                        <div style="margin: 0 10px;" class="form-group clearfix">
+                            <input type="radio" name="ck_name" class="pull-left" value="{{ user[0] }}">
+                            <span class="pull-left" style="margin: 0 5px;">{{ user[0] }}</span>
+                        </div>
+                    {% endfor %}
+                    <div class="form-control btn-info" style="cursor: pointer" onclick="filterName()">search</div>
+                </div>
+                <div class="form-group tip-msg"></div>
+            </form>
+            <table class="table table-hover table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Path</th>
+                    <th>TargetUser</th>
+                    <th width="100px">CheckUser</th>
+                    <th width="100px">TaskStatus</th>
+                    <th>Repeat</th>
+                    <th width="80px" style="text-align: center">Option</th>
+                </tr>
+                </thead>
+                {% if data.tasks %}
+                    <tbody id="emp" style="height: calc(100vh - 340px);overflow: auto">
+                    {% for task in data.tasks %}
+                        <tr>
+                            <td>{{ task.addtime }}</td>
+                            <td title="{{ task.task_path }}">{{ task.task_path }}</td>
+                            <td>{{ task.target_user }}</td>
+                            <td>{{ task.check_user }}</td>
+                            <td>{{ task.task_status }}</td>
+                            <td>{{ task.is_repeat }}</td>
+                            <td width="80px" class="opt" bgcolor="#7fffd4" onclick="deleteTask($(this))">delete</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% else %}
+                    <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto"></tbody>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <script>
+
+        let tm = $('.tip-msg');
+
+        function GMTToStr(time) {
+            let date = new Date(time);
+            let ss = date.getFullYear() + '-' +
+                (date.getMonth() + 1) + '-' +
+                date.getDate() + ' ' +
+                date.getHours() + ':' +
+                date.getMinutes() + ':' +
+                date.getSeconds();
+            return ss
+        }
+
+        function selectedList(node_list) {
+            var re_list = [];
+            for (var i = 0; i < node_list.length; i++) {
+                re_list.push(node_list[i].value)
+            }
+            return re_list
+        }
+
+        function assignedTask() {
+            var addr = $('#fPath option:checked').val();
+            {#console.log(addr);#}
+            {#let nameList = [];#}
+            var ss = $('input[name=target]:checked');
+            var nameList = selectedList(ss);
+            {#console.log(nameList);#}
+            var nst = $('input[name=cate]:checked');
+            var cateList = selectedList(nst);
+            {#console.log(cateList);#}
+            var count = $("input[name='people']:checked").val();
+            {#console.log(count);#}
+            var ck = $("input[name='chc']:checked").val();
+
+            if (addr != '' && nameList.length > 0 && cateList.length > 0 && count && ck) {
+                $('.none-error').get(0).innerText = '';
+                $.ajax({
+                    url: '/create_task',
+                    method: 'post',
+                    data: {
+                        'addr': addr,
+                        'ck': ck,
+                        'nameList': JSON.stringify(nameList),
+                        'cateList': cateList.join(','),
+                        'count': count
+                    },
+                    success: function (data) {
+                        console.log(data);
+                        if (data == 'ok') {
+                            location.reload()
+                        }
+                    }
+                })
+            } else {
+                $('.none-error').get(0).innerText = 'error: 选取失败,请核对选中信息后重试'
+            }
+
+        }
+
+        function filterLabel($this) {
+            var vv = $this.val();
+            if (vv == 'name') {
+                $('.filter-name').get(0).style.display = 'block';
+                $('.filter-time').get(0).style.display = 'none';
+                {#$('.filter-path').get(0).style.display = 'none';#}
+            } else {
+                $('.filter-name').get(0).style.display = 'none';
+                $('.filter-time').get(0).style.display = 'block';
+                {#$('.filter-path').get(0).style.display = 'none';#}
+            }
+        }
+
+        function deleteTask($this) {
+            console.log($this.siblings()[1].innerText);
+            var path = $this.siblings()[1].innerText;
+            $.ajax({
+                url: '/delete_task', method: 'post', data: {'path': path}, success: function (data) {
+                    {#console.log(data);#}
+                    if (data == 200) {
+                        location.reload()
+                    } else {
+                        alert('failed')
+                    }
+                }
+            })
+        }
+
+        function filterName() {
+            var name = $("input[name='ck_name']:checked").val();
+            if (name) {
+                $.ajax({
+                    url: '/filter_name', method: 'post', data: {'name': name}, success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    var tr_inhtml = '<tr>' +
+                                        '<td>' + GMTToStr(data[t][0]) + '</td>' +
+                                        '<td>' + data[t][1] + '</td>' +
+                                        '<td>' + data[t][2] + '</td>' +
+                                        '<td>' + data[t][3] + '</td>' +
+                                        '<td>' + data[t][4] + '</td>' +
+                                        '<td>' + data[t][5] + '</td>' +
+                                        '<td width="80px" class="opt" bgcolor="#7fffd4" onclick="deleteTask($(this))">delete</td>' +
+                                        '</tr>';
+                                    all_str += tr_inhtml;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no user selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+        }
+
+        function filterTime() {
+            var s_time = $('#startTime').val();
+            var e_time = $('#endTime').val();
+            if (s_time && e_time) {
+                $.ajax({
+                    url: '/filter_time',
+                    method: 'post',
+                    data: {'s_time': s_time, 'e_time': e_time},
+                    success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    var tr_inhtml = '<tr>' +
+                                        '<td>' + GMTToStr(data[t][0]) + '</td>' +
+                                        '<td>' + data[t][1] + '</td>' +
+                                        '<td>' + data[t][2] + '</td>' +
+                                        '<td>' + data[t][3] + '</td>' +
+                                        '<td>' + data[t][4] + '</td>' +
+                                        '<td>' + data[t][5] + '</td>' +
+                                        '<td width="80px" class="opt" bgcolor="#7fffd4" onclick="deleteTask($(this))">delete</td>' +
+                                        '</tr>';
+                                    all_str += tr_inhtml;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no time selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+
+        }
+
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'target-check/base.html' %}
+{% block title %}目标检测平台-标注{% endblock %}
+{% block nav_title %}目标检测平台--标注{% endblock %}
+{% block style %}
+    <style>
+        thead {
+            width: calc(100% - 1em);
+        }
+
+        th.last {
+            width: 17px;
+        }
+
+        thead, tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody {
+            display: block;
+            height: calc(100vh - 300px);
+            overflow-y: scroll;
+        }
+
+        tbody > tr > td, tbody > tr > th {
+            line-height: 2em;
+            white-space: nowrap;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        thead th {
+            border: none;
+        }
+
+        .select-box {
+            position: fixed;
+            height: 200px;
+            width: 300px;
+            background-color: gainsboro;
+            top: calc(50% - 150px);
+            left: calc(50% - 150px);
+            box-shadow: 0 10px 14px rgba(0, 0, 0, .12);
+            padding: 20px;
+            display: none;
+        }
+
+        .ex-img-dir {
+            width: 100%;
+            {#height: 36px;#}
+            border: 0;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <div id="mainDiv" class="clearfix" style="background-color:#fff;">
+        <div class="clearfix">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Path</th>
+                    <th>TaskImgDir</th>
+                    <th>Category</th>
+                    <th>CheckUser</th>
+                    <th>Status</th>
+                    <th>IsRepeat</th>
+                    <th>Option</th>
+                    <th style="width: 17px"></th>
+                </tr>
+                </thead>
+                <tbody id="emp">
+                {% for task in data.user_task_list %}
+                    <tr>
+                        <td>{{ task.addtime }}</td>
+                        <td title="{{ task.task_path }}">{{ task.task_path }}</td>
+                        {% if task.is_repeat == 'Y' %}
+                            <td style="padding: 0">
+                                <select name="" id="" class="ex-img-dir form-control">
+                                    {% for foo in task.target_user.split(',') %}
+                                        {% if data.username in foo %}
+                                            <option value="{{ foo }}">{{ foo }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        {% else %}
+                            <td>{{ data.username }}</td>
+                        {% endif %}
+                        {#                        <td title="{{ task.target_user }}">{{ task.target_user }}</td>#}
+                        <td>{{ task.cates }}</td>
+                        <td>{{ task.check_user }}</td>
+                        <td class="status" style="color: seagreen;">{{ task.task_status }}</td>
+                        <td>{{ task.is_repeat }}</td>
+                        <td>
+                            <button style="border: 0" class="btn-success" onclick="openLabelMe($(this))">open</button>
+                            <button style="border: 0" class="btn-danger" onclick="targetFinished($(this))">
+                                finished
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="select-box">
+        <div class="form-group ">
+            <label for="">选取任务文件夹:</label>
+            <select name="" id="" class="form-control">
+                <option value="">kkkkkkkkkkk</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <div class="btn btn-success form-control">确定</div>
+            <div class="btn btn-info form-control">取消</div>
+        </div>
+    </div>
+    <script>
+        function finished(ini_path, dst_path, img_path, repeat) {
+            $.ajax({
+                url: '/finished',
+                method: 'post',
+                data: {'ini_path': ini_path, 'dst_path': dst_path, 'img_path': img_path, 'repeat': repeat},
+                success: function (data) {
+                    console.log(data);
+                    {#location.reload()#}
+                }
+            })
+        }
+
+        function cross_dir(dir_list, ss) {
+            let n_list = [];
+            for (var dir in dir_list) {
+                {#console.log(dir_list[dir]);#}
+                if (dir_list[dir].indexOf(ss) != -1) {
+                    n_list.push(dir_list[dir])
+                }
+            }
+            return n_list
+        }
+
+        function openLabelMe($this) {
+            {#var cmd = new ActiveXObject("WScript.Shell");#}
+            {#cmd.run('cmd.exe /c labelme C:\\Users\\Whu\\Desktop\\target-version\\version3\\test-image-dir\\images', 0);#}
+            {#var user = $('#usn').text();#}
+            var user = $('.username').text();
+            var i_path = $this.parent().siblings().get(1).innerText;
+            var cates = $this.parent().siblings().get(3).innerText;
+            var is_repeat = $this.parent().siblings().get(6).innerText;
+            {#var save_path = open_path + '\\' + user;#}
+            {#var label_str = $this.parent().siblings()[5].innerText.split('-').join(',');#}
+            try {
+                var cmd = new ActiveXObject("WScript.Shell");
+                if (is_repeat == 'Y') {
+                    {#var se_list = cross_dir(dir_list, user);#}
+                    {#console.log(se_list);#}
+                    var dn = $('.ex-img-dir').val();
+                    var op = i_path + '\\' + dn + '\\images';
+                    console.log(dn);
+                    var sp = i_path + '\\' + dn + '\\labels\\' + user;
+                    cmd.run('cmd.exe /c labelme ' + op + ' --labels ' + cates + ' --nodata --autosave --output ' + sp, 0);
+                } else {
+                    var dir_name = $this.parent().siblings().get(2).innerText;
+                    var open_path = i_path + '\\' + dir_name + '\\images';
+                    var save_path = i_path + '\\' + dir_name + '\\labels';
+                    cmd.run('cmd.exe /c labelme ' + open_path + ' --labels ' + cates + ' --nodata --autosave --output ' + save_path, 0);
+                }
+            } catch (e) {
+                alert('当前浏览器不兼容,请使用IE浏览器')
+            }
+        }
+
+        function targetFinished($this) {
+            var user = $('.username').text();
+            var i_path = $this.parent().siblings().get(1).innerText;
+            var is_repeat = $this.parent().siblings().get(6).innerText;
+            if (is_repeat == 'Y') {
+                {#var se_list = cross_dir(dir_list, user);#}
+                {#console.log(se_list);#}
+                var dn = $('.ex-img-dir').val();
+                var inp = i_path + '\\' + dn + '\\labels\\' + user;
+                var imp = i_path + '\\' + dn + '\\images';
+                finished(inp, i_path, imp, 'Y')
+            } else {
+                var dir_name = $this.parent().siblings().get(2).innerText;
+                var ini_path = i_path + '\\' + dir_name + '\\labels';
+                var ini_img_path = i_path + '\\' + dir_name + '\\images';
+                finished(ini_path, i_path, ini_img_path, 'N')
+            }
+        }
+
+        function switchSelect() {
+            let ss = $('input[name=rh_time]:checked');
+            console.log(ss.val())
+        }
+    </script>
+{% endblock %}

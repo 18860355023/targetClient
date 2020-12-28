@@ -1,0 +1,258 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        thead {
+            width: calc(100% - 1em);
+        }
+
+        th.last {
+            width: 17px;
+        }
+
+        thead, tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody {
+            display: block;
+            height: calc(100vh - 300px);
+            overflow-y: scroll;
+        }
+
+        tbody > tr > td, tbody > tr > th {
+            line-height: 2em;
+            white-space: nowrap;
+            font-size: 10px;
+            overflow: hidden;
+        }
+
+        thead th {
+            border: none;
+        }
+
+        .data-set {
+            width: calc(100vw - 1080px);
+        {#height: calc(100vh - 320px);#} margin-left: 60px;
+        }
+
+        .path-error, .name-error, .tip-error {
+            color: red;
+            font-size: 10px;
+            margin: 5px 10px;
+        }
+
+        .data-box {
+            height: calc(100vh - 180px);
+            padding: 40px 60px;
+        }
+
+        .import-path {
+            width: 400px;
+            height: calc(100vh - 260px);
+            padding-right: 50px;
+            border-right: 2px solid darksalmon;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <div class="clearfix data-box" style="margin: 0">
+        <form class="pull-left clearfix import-path">
+            <div class="form-group">
+                <label for="f_path">原始数据集路径:</label>
+                <div class="input-group">
+                    <div class="input-group-addon prefix">{{ data.base_path }}</div>
+                    <input type="text" class="form-control" id="f_path" placeholder="数据集文件夹名"
+                           onblur="fPathCheck($(this))">
+                </div>
+                <p class="path-error"></p>
+            </div>
+            {#            <div class="form-group">#}
+            {#                <label for="f_path" style="font-size: 14px;">原始数据集路径:</label>#}
+            {#                <div class="form-inline">#}
+            {#                    <input type="text" class="form-control" id="f_path" placeholder="请选择原始数据集服务器路径"#}
+            {#                           onblur="fPathCheck()" style="" disabled>#}
+            {#                    <div class="btn btn-success form-control" onclick="openTkinter()">选取路径</div>#}
+            {#                </div>#}
+            {#                <p id="path-error" style="color:red;font-size: 10px;"></p>#}
+            {#            </div>#}
+            <div class="form-group">
+                <label for="field" style="font-size: 14px;">数据集所属领域: <span style="font-weight: normal;font-size: 10px;"> (领域不存在? <a
+                        href="javascript:void(0);" onclick="addField()">点我</a> 添加领域!)</span></label>
+                <select name="" id="field" class="form-control">
+                    {% for field in data.fields %}
+                        <option value="{{ field.id }}">{{ field.field_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="data-name" style="font-size: 14px;">数据集命名:</label>
+                <input type="text" id="data-name" class="form-control" placeholder="请给选中数据集命名"
+                       onblur="nameCheck($(this))">
+                <p class="name-error"></p>
+            </div>
+            <p class="tip-error" style="color: red;font-size: 12px;margin-left: 14px;"></p>
+            <div class="form-group">
+                <div class="btn btn-info" style="width: 100%" onclick="addInitDataSet()">添加数据集</div>
+            </div>
+        </form>
+        <table class="table table-bordered pull-left data-set" style="">
+            <thead>
+            <tr>
+                <th>数据集名称</th>
+                <th>数据集路径</th>
+                <th>类别及数量</th>
+                <th width="100px">总数量</th>
+                <th width="50px">状态</th>
+                <th class="last" style="width: 17px"></th>
+            </tr>
+            </thead>
+            <tbody id="s-tbody">
+            {% for datum in data.ss_list %}
+                <tr>
+                    <td>{{ datum['name'] }}</td>
+                    <td>{{ datum['path'] }}</td>
+                    {% if datum['cate'] %}
+                        <td title="{{ datum['cate'] }}">{{ datum['cate'] }}</td>
+                    {% else %}
+                        <td>空</td>
+                    {% endif %}
+                    <td width="100px">{{ datum['num'] }}</td>
+                    <td width="50px">{{ datum['status'] }}</td>
+                </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    <script>
+
+        function fPathCheck($this) {
+            var path_name = $this.val();
+            var path_pre = $('.prefix').text();
+            var error = $('.path-error').get(0);
+            if (path_name) {
+                $.ajax({
+                    url: '/path_check',
+                    method: 'post',
+                    data: {'path': path_pre + '\\' + path_name},
+                    success: function (data) {
+                        data == 200 ? error.innerText = '' : (data == 404 ? error.innerText = 'error: 此路径不存在服务器中' : error.innerText = 'error: 文件路径已存在');
+                    }
+                })
+            } else {
+                error.innerText = 'error: 文件路径不能为空'
+            }
+        }
+
+        function nameCheck($this) {
+            var name = $this.val();
+            var error = $('.name-error').get(0);
+            if (name) {
+                $.ajax({
+                    url: '/name_check', method: 'post', data: {'name': name}, success: function (data) {
+                        console.log(data);
+                        data == 300 ? error.innerText = 'error: 当前输入名称已存在' : error.innerText = '';
+                    }
+                })
+            } else {
+                error.innerText = 'error: 数据集名称不能为空'
+            }
+        }
+
+        function addCategory() {
+            console.log('jdhfd');
+            var cate = prompt("请输入类别名");
+            if (cate) {
+                $.ajax({
+                    url: '/add_cate', method: 'post', data: {'cate': cate}, success: function (res) {
+                        console.log(res);
+                        location.reload()
+                    }
+                })
+            }
+        }
+
+
+        function addInitDataSet() {
+            var addr = $('#f_path').val();
+            var path_pre = $('.prefix').text();
+            var name = $('#data-name').val();
+            var field = $('#field').val();
+            var p_error = $('.path-error').text();
+            var n_error = $('.name-error').text();
+            {#console.log(path_pre + addr, name, field);#}
+            {#console.log('error:', p_error, n_error);#}
+            if (addr && name && field) {
+                if (p_error == '' && n_error == '') {
+                    $.ajax({
+                        url: '/add_init_data_set',
+                        method: 'post',
+                        data: {'path': path_pre + '\\' + addr, 'name': name, 'field': field},
+                        success: function (data) {
+                            console.log(data);
+                            if (data == 200) {
+                                location.reload()
+                            } else {
+                                $('.tip-error').get(0).innerText = data;
+                            }
+                        }
+                    })
+                } else {
+                    $('.tip-error').get(0).innerText = '输入有误,请修改之后再重试!'
+                }
+            } else {
+                $('.tip-error').get(0).innerText = '文件夹名称和数据集名称不能为空';
+            }
+
+        }
+
+        function deleteIni($this) {
+            var nid = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/delete_ini', method: 'post', data: {'id': nid}, success: function (data) {
+                    {#console.log(data);#}
+                    location.reload()
+                }
+            })
+        }
+
+        function openTkinter() {
+            $.ajax({
+                url: '/open_tk', method: 'get', success: function (data) {
+                    if (data) {
+                        $('#f_path').get(0).value = data;
+                    }
+                }
+            })
+        }
+
+        function addField() {
+            Swal.fire({
+                title: '请输入领域名称',
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: false
+            }).then(function (field) {
+                console.log(field.value);
+                $.ajax({
+                    url: '/add_field', method: 'post', data: {'field': field.value}, success: function (data) {
+                        console.log(data);
+                        if (data.status == 200) {
+                            var st = '<option value="' + data.msg['field_id'] + '">' + data.msg['field_name'] + '</option>';
+                            $(st).appendTo($('#field'))
+                        }
+                    }
+                })
+            })
+        }
+
+
+    </script>
+
+{% endblock %}

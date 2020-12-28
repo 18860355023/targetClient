@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}目标检测平台-标注{% endblock %}
+{% block nav_title %}目标检测标注平台--标注{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="/static/css/root.css">{% endblock %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left" id="usn"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block content %}
+    <div id="mainDiv" class="clearfix" style="background-color:#fff;">
+        <div class="clearfix">
+            <table class="table table-hover table-bordered pull-left"
+                   style="margin: 60px 20px 0 6px;;width: calc(100vw - 540px)" id="userInfo">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Path</th>
+                    <th>TargetUser</th>
+                    <th>Category</th>
+                    <th width="100px">CheckUser</th>
+                    <th>Status</th>
+                    <th>IsRepeat</th>
+                    <th width="120px">Option</th>
+                    <th style="width: 17px"></th>
+                </tr>
+                </thead>
+                <tbody id="emp">
+                {% for task in data.user_task_list %}
+                    <tr>
+                        <td>{{ task.addtime }}</td>
+                        <td title="{{ task.task_path }}">{{ task.task_path }}</td>
+                        <td title="{{ task.target_user }}">{{ task.target_user }}</td>
+                        <td>{{ task.cates }}</td>
+                        <td width="100px">{{ task.check_user }}</td>
+                        <td class="status" style="color: seagreen;">{{ task.task_status }}</td>
+                        <td>{{ task.is_repeat }}</td>
+                        <td width="120px">
+                            <button style="border: 0" class="btn-success" onclick="openLabelMe($(this))">open</button>
+                            <button style="border: 0" class="btn-danger" onclick="targetFinished($(this))">
+                                finished
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+
+        function cross_dir(dir_list, ss) {
+            let n_list = [];
+            for (var dir in dir_list) {
+                {#console.log(dir_list[dir]);#}
+                if (dir_list[dir].indexOf(ss) != -1) {
+                    n_list.push(dir_list[dir])
+                }
+            }
+            return n_list
+        }
+
+        function openLabelMe($this) {
+            {#var cmd = new ActiveXObject("WScript.Shell");#}
+            {#cmd.run('cmd.exe /c labelme C:\\Users\\Whu\\Desktop\\target-version\\version3\\test-image-dir\\images', 0);#}
+            var user = $('#usn').text();
+            var i_path = $this.parent().siblings().get(1).innerText;
+            var open_path = i_path + '\\' + user + '\\images';
+            var dir_list = $this.parent().siblings().get(2).innerText.split(',');
+
+            var cates = $this.parent().siblings().get(3).innerText;
+
+            var is_repeat = $this.parent().siblings().get(6).innerText;
+            console.log(open_path + '\\' + user);
+            {#var save_path = open_path + '\\' + user;#}
+            {#var label_str = $this.parent().siblings()[5].innerText.split('-').join(',');#}
+            try {
+                var cmd = new ActiveXObject("WScript.Shell");
+                if (is_repeat == 'Y') {
+                    var se_list = cross_dir(dir_list, user);
+                    Swal.fire({
+                        title: '设置类别',
+                        text: "输入新类别(可为空)",
+                        input: 'text',
+                        {#confirmButtonText: 'Next &rarr;',#}
+                        showCancelButton: true,
+                        allowOutsideClick: false,
+                        {#progressSteps: ['1', '2']#}
+                    }).then((result) => {
+                        {#console.log(result);#}
+                        if (!result.dismiss) {
+                            const answers = result.value;
+                            $.ajax({
+                                url: '/dst_data_config',
+                                method: 'post',
+                                data: {
+                                    'new_cate': answers,
+                                    'name': name,
+                                    'old_cate': o_cate
+                                },
+                                success: function (data) {
+                                    console.log(data);
+                                    let str = '';
+                                    str = '<div class="p-log">\n' +
+                                        '                    <span class="log" title="' + data['name'] + '">' + data['name'] + '</span>\n' +
+                                        '                    <span class="log" title="' + data['o_cate'] + '">' + data['o_cate'] + '</span>\n' +
+                                        '                    <span class="log" title="' + data['n_cate'] + '">' + data['n_cate'] + '</span>\n' +
+                                        '                    <span class="log" title="' + data['num'] + '">' + data['num'] + '</span>\n' +
+                                        '                </div>';
+
+                                    $(str).appendTo($('.dstLog'));
+                                }
+                            });
+                        }
+                    })
+                } else {
+                    var save_path = i_path + '\\' + user + '\\labels\\' + user;
+                    cmd.run('cmd.exe /c labelme ' + open_path + ' --labels ' + cates + ' --nodata --autosave --output ' + save_path, 0);
+                }
+            } catch (e) {
+                alert('当前浏览器不兼容,请使用IE浏览器')
+            }
+        }
+
+        function targetFinished($this) {
+            var id = $this.parent().siblings()[0].innerText;
+            var path = $this.parent().siblings()[3].innerText;
+            console.log($this.parent().siblings()[0].innerText);
+            $.ajax({
+                url: '/finished', method: 'post', data: {'id': id, 'path': path}, success: function (data) {
+                    console.log(data);
+                    location.reload()
+                }
+            })
+        }
+
+        function switchSelect() {
+            let ss = $('input[name=rh_time]:checked');
+            console.log(ss.val())
+        }
+
+        /**
+         $('.finished').click(function () {
+            var path = $(this).parent().parents('tr').find('.path').text();
+            var b_path = $('.active').text();
+            $.ajax({
+                url: '/finished', method: 'post', data: {'path': path, 'b_path': b_path}, success: function (data) {
+                    console.log(data);
+                    if (data == 'success') {
+                        location.reload()
+                    } else {
+                        alert(data)
+                    }
+                }
+            })
+        });
+
+
+         $('.open').click(function () {
+            console.log('打开labelme');
+            var path = $(this).parent().parents('tr').find('.path').text();
+            $.ajax({
+                url: '/open_label', method: 'post', data: {'path': path}, success: function (data) {
+                    console.log(data)
+                }
+            })
+        });
+         **/
+
+        $('.nav-option').click(function () {
+            {#console.log($(this).text());#}
+            var labels = $(this).siblings();
+            for (var i = 0; i < labels.length; i++) {
+                labels.get(i).classList.remove('active')
+            }
+            $(this).addClass('active');
+            $.ajax({
+                url: '/common_index',
+                method: 'post',
+                data: {'path': $(this).text(), 'user': $('#usn').text()},
+                success: function (data) {
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td class="name">' + data[task]['name'] + '</td><td class="path">' +
+                            data[task]['path'] + '</td><td class="num">' + data[task]['num'] + '</td><td class="status">' + data[task]['status'] + '</td>' +
+                            '<td><span class="btn btn-info open">open</span>\n' +
+                            '                                <span class="btn btn-success finished">finish</span>' +
+                            '</tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                    $('.open').click(function () {
+                        console.log('打开labelme');
+                        var path = $(this).parent().parents('tr').find('.path').text();
+                        $.ajax({
+                            url: '/open_label', method: 'post', data: {'path': path}, success: function (data) {
+                                console.log(data)
+                            }
+                        })
+                    });
+                    $('.finished').click(function () {
+                        var path = $(this).parent().parents('tr').find('.path').text();
+                        var b_path = $('.active').text();
+                        $.ajax({
+                            url: '/finished',
+                            method: 'post',
+                            data: {'path': path, 'b_path': b_path},
+                            success: function (data) {
+                                console.log(data);
+                                if (data == 'success') {
+                                    location.reload()
+                                } else {
+                                    alert(data)
+                                }
+                            }
+                        })
+                    });
+                }
+            })
+        });
+    </script>
+{% endblock %}

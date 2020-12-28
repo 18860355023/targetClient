@@ -1,0 +1,48 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        .oneFile {
+            width: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
+            color: gainsboro;
+            text-align: center;
+        }
+
+        .cloud {
+            height: 300px;
+            line-height: 300px;
+        }
+
+        .par {
+            width: 50%;
+            padding-left: 30px;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <form>
+        <div class="form-group">
+            <label for="jn">json路径</label>
+            <input type="text" class="form-control" id="jn" placeholder="">
+        </div>
+        <div class="form-group">
+            <label for="tt">保存路径</label>
+            <input type="text" class="form-control" id="tt" placeholder="">
+        </div>
+        <div class="btn btn-default" onclick="jsonChange()">转换</div>
+    </form>
+
+
+    <script>
+    function jsonChange() {
+        var jn = $('#jn').val();
+        var tt = $('#tt').val();
+        $.ajax({url:'/jt',method:'post',data:{'jn':jn,'tt':tt},success:function (data) {
+                console.log(data)
+            }})
+    }
+    </script>
+
+{% endblock %}

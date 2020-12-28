@@ -1,0 +1,30 @@
+{
+    "imagePath": "int8_0247_pan_w7_h1.png",
+    "imageHeight": 1024,
+    "imageWidth": 1024,
+    "shapes": [
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    30.0,
+                    277.0
+                ],
+                [
+                    154.0,
+                    277.0
+                ],
+                [
+                    154.0,
+                    370.0
+                ],
+                [
+                    30.0,
+                    370.0
+                ]
+            ]
+        }
+    ]
+}

@@ -1,0 +1,99 @@
+{
+    "imagePath": "int8_0157_pan_w8_h2.png",
+    "imageHeight": 1024,
+    "imageWidth": 1024,
+    "shapes": [
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    293.0,
+                    65.0
+                ],
+                [
+                    349.0,
+                    65.0
+                ],
+                [
+                    349.0,
+                    140.0
+                ],
+                [
+                    293.0,
+                    140.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    291.0,
+                    566.0
+                ],
+                [
+                    343.0,
+                    566.0
+                ],
+                [
+                    343.0,
+                    663.0
+                ],
+                [
+                    291.0,
+                    663.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    862.0,
+                    574.0
+                ],
+                [
+                    900.0,
+                    574.0
+                ],
+                [
+                    900.0,
+                    647.0
+                ],
+                [
+                    862.0,
+                    647.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    849.0,
+                    34.0
+                ],
+                [
+                    887.0,
+                    34.0
+                ],
+                [
+                    887.0,
+                    99.0
+                ],
+                [
+                    849.0,
+                    99.0
+                ]
+            ]
+        }
+    ]
+}

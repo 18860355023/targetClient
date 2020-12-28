@@ -1,0 +1,226 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        thead {
+            width: calc(100% - 1em);
+        }
+
+        th.last {
+            width: 17px;
+        }
+
+        thead, tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody {
+            display: block;
+            height: calc(100vh - 300px);
+            overflow-y: scroll;
+        }
+
+        tbody > tr > td, tbody > tr > th {
+            line-height: 2em;
+            white-space: nowrap;
+            font-size: 10px;
+            overflow: hidden;
+        }
+
+        thead th {
+            border: none;
+        }
+
+        .oneFile {
+            width: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
+            color: gainsboro;
+            text-align: center;
+        }
+
+        .cloud {
+            height: 300px;
+            line-height: 300px;
+        }
+
+        .par {
+            width: 50%;
+            padding-left: 30px;
+        }
+
+        .opt {
+            text-align: center;
+            background-color: lightcoral;
+            cursor: pointer;
+            color: white;
+        }
+
+        .config_file {
+            width: 50%;
+            padding: 20px 60px;
+            border-left: 2px solid lightcoral;
+            height: calc(100vh - 200px);
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <div class="clearfix" style="margin: 0">
+        <div style="width: 50%;padding: 20px 40px" class="pull-left">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>数据集名称</th>
+                    <th>路径</th>
+                    <th>类别及数量</th>
+                    <th>总数量</th>
+                    <th width="80px" style="text-align: center;">操作</th>
+                    <th class="last"></th>
+                </tr>
+                </thead>
+                <tbody id="d-body">
+                {% for foo in data.dst_sets_list %}
+                    <tr>
+                        <td>{{ foo.name }}</td>
+                        <td title="{{ foo.path }}">{{ foo.path }}</td>
+                        <td title="{{ foo.cate_num }}">{{ foo.cate_num }}</td>
+                        <td>{{ foo.num }}</td>
+                        <td width="80px" class="opt" onclick="split_data($(this))">训/测</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pull-left config_file">
+            <div class="pull-left form-group oneFile">
+                <label for="config_file" class="cloud">
+                    <span class="icon-text glyphicon glyphicon-cloud-upload"></span>
+                    <span class="icon-text">文件上传</span>
+                    {#            <p class="icon-text">拖动文件到此处</p>#}
+                </label>
+                <p style="color: indianred;font-size: 14px;">注: 暂不支持拖动文件上传</p>
+                <input type="file" id="config_file" onchange="configFileUpload(this)" accept=".py"
+                       style="display: none;">
+            </div>
+            <form class="pull-left par">
+                <div class="form-group">
+                    <label for="st">学习率</label>
+                    <input type="text" class="form-control" id="st" placeholder="Email">
+                </div>
+                <div class="form-group">
+                    <label for="sc">学习epoch数</label>
+                    <input type="text" class="form-control" id="sc" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <label for="se">step epoch数</label>
+                    <input type="text" class="form-control" id="se" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <label for="sw">网络输入图像resize尺寸</label>
+                    <input type="text" class="form-control" id="sw" placeholder="Password">
+                </div>
+                <div class="btn btn-info form-control">Submit</div>
+{#                <div class="btn btn-success form-control" onclick="split_data($(this))">划分训测比</div>#}
+            </form>
+        </div>
+    </div>
+    <script>
+
+        function rowColTable(data) {
+            let html = "";
+
+            $('#d-body').html('');
+            for (var i = 0; i < data.length; i++) {
+                html += '<tr>' +
+                    '<td>' + data[i]['name'] + '</td>' +
+                    '<td>' + data[i]['cate'] + '</td>' +
+                    '<td width="80px" class="opt" onclick="split_xc($(this))">划分</td>' +
+                    '</tr>';
+            }
+            $("#d-body").html(html);
+        }
+
+        function get_ini_data_set() {
+            {#var field = $('#field').val();#}
+            $.ajax({
+                url: '/get_dst_data_set', method: 'get', success: function (data) {
+                    if (data != 'error') {
+                        rowColTable(data);
+                    } else {
+                        $('#d-tbody').get(0).innerHTML = '<p style="margin-top:100px;margin-left:47%;color:red">暂无数据</p>'
+                    }
+                }
+            })
+        }
+
+        {#get_ini_data_set();#}
+
+        function split_xc($this) {
+            Swal.fire({
+                title: '选取 训练集/测试集 比例',
+                {#type: 'question',#}
+                input: 'range',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                inputAttributes: {
+                    min: 0,
+                    max: 100,
+                    step: 1
+                },
+                inputValue: 50
+            }).then((res) => {
+                console.log(res);
+                /**
+                 if (res.value) {
+                    var num = res.value;
+                    var dst_name = $this.siblings()[0].innerText;
+                    $.ajax({
+                        url: '/split_data',
+                        method: 'post',
+                        data: {'name': dst_name, 'num': num},
+                        success: function (data) {
+                            console.log(data)
+                        }
+                    })
+                }
+                 if (res.dismiss) {
+                    console.log('quxiaochenggong')
+                }
+                 **/
+            });
+        }
+
+        function split_data($this) {
+            Swal.fire({
+                title: '划分 训练集/测试集',
+                text: '请输入数字(eg: 500)或者百分比(eg: 50%)',
+                input: 'text',
+                showCloseButton: true,
+                showCancelButton: true,
+            }).then((res) => {
+                console.log(res);
+                 if (res.value) {
+                    var num = res.value;
+                    var dst_name = $this.siblings()[0].innerText;
+                    $.ajax({
+                        url: '/split_data',
+                        method: 'post',
+                        data: {'name': dst_name, 'num': num},
+                        success: function (data) {
+                            console.log(data)
+                        }
+                    })
+                }
+                 /**
+                 if (res.dismiss) {
+                    console.log('quxiaochenggong')
+                }
+                  **/
+            });
+        }
+    </script>
+
+{% endblock %}

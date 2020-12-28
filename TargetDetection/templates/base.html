@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ch">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="shortcut icon" href="#"/>
+    <script src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css">
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.min.css">
+    <script href="/static/bootstrap-table/bootstrap-table.js"></script>
+    <script href="/static/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+    {% block head %}{% endblock %}
+    <style>
+        .usi {
+            border: 0;
+            height: 50px;
+            line-height: 50px;
+            margin-left: 5px;
+            color: grey;
+        }
+
+        .usi:last-child {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+
+<body style="background-color:#f9f9f9;">
+<div id="mainTitle" style="margin-top: 10px;padding: 0 130px;">
+    <div class="pull-left" style="font-size: 18px;font-weight: bold;color: lightcoral;user-select: none;">
+        {% block nav_title %}
+
+        {% endblock %}
+    </div>
+    <div class="pull-right clearfix">
+        <span class="pull-left glyphicon glyphicon-user usi"></span>
+        <span class="pull-left usi">{{ data.username }}</span>
+        <span class="usi"><a href="/logout">退出</a></span>
+    </div>
+</div>
+{% block content %}{% endblock %}
+</body>
+
+<script>
+    function GMTToStr(time) {
+        let date = new Date(time);
+        let Str = date.getFullYear() + '-' +
+            (date.getMonth() + 1) + '-' +
+            date.getDate() + ' ' +
+            date.getHours() + ':' +
+            date.getMinutes() + ':' +
+            date.getSeconds();
+        return Str
+    }
+</script>
+</html>

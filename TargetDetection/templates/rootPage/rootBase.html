@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block nav_title %}目标检测平台-管理{% endblock %}
+{% block title %}目标检测平台-管理{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="/static/css/root.css">
+{% endblock %}
+{% block content %}
+    <div id="mainDiv" class="clearfix" style="background-color:#fff;">
+        <ul class="list-group nav-list">
+            <li class="list-group-item nav-title"></li>
+            <li class="list-group-item nav-option-root"><a href="/init_file">数据集导入</a></li>
+            <li class="list-group-item nav-option-root"><a href="/">任务管理</a></li>
+            <li class="list-group-item nav-option-root"><a href="/target_file">标注文件管理</a></li>
+{#            <li class="list-group-item nav-option-root"><a href="JavaScript:void(0)">人员绩效管理</a></li>#}
+{#            <li class="list-group-item nav-option-root"><a href="JavaScript:void(0)">标注管理</a></li>#}
+{#            <li class="list-group-item nav-option-root"><a href="JavaScript:void(0)">标注管理</a></li>#}
+            <li class="list-group-item nav-option-root"><a href="/user_info">用户管理</a></li>
+        </ul>
+        <div id="mainContent">
+            {% block navContent %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        $('.nav-option-root').click(function () {
+            console.log($(this).get(0).firstElementChild);
+            $(this).get(0).firstChild.click();
+        });
+    </script>
+{% endblock %}

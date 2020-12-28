@@ -1,0 +1,88 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix" style="border: 1px solid lightcoral;width: 100%;margin: 0">
+        <div class="form-group pull-left" style="width: 50%;border: 1px solid olive">
+            <div>
+                <label for="img_data">导入原始图片集</label>
+                <input type="file" id="img_data" class="form-control" webkitdirectory multiple onchange="imgData(this)">
+
+                <div id="img_name" style="height: 200px;overflow: auto"></div>
+            </div>
+            <div>
+                <label for="target_data">导入标注文件集</label>
+                <input type="file" id="target_data" onchange="targetData(this)">
+
+                <div id="target_name" style="height: 200px;overflow: auto"></div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+
+        function imgData($this) {
+            let sss = '';
+            let datas = new FormData();
+            for (var i = 0; i < $this.files.length; i++) {
+                console.log($this.files[i]);
+                var str = '<li>' + $this.files[i].name + '</li>';
+                sss += str;
+                {#let fileobj = new FormData();#}
+                {#fileobj.append('file', $this.files[i]);#}
+                {#file_list.push(fileobj);#}
+
+
+                let reader = new FileReader();
+                // 读取文件
+                reader.readAsText($this.files[i], "UTF-8");
+                // 读取完文件之后会回来这里
+                reader.onload = function (e) {
+                    // 读取文件内容
+                    var fileString = e.target.result;
+                    // 接下来可对文件内容进行处理
+                    console.log(fileString);
+                    datas.append($this.files[i].name, fileString)
+                }
+
+            }
+            console.log(datas);
+            $.ajax({
+                url: '/file_upload', method: 'post', processData: false,
+                contentType: false, data: {'data': datas}, success: function (data) {
+                    console.log(data)
+                }
+            });
+            let im = $('#img_name');
+            im.empty();
+            let nsss = '<ul>' + sss + '</ul>';
+            $(nsss).appendTo(im);
+        }
+
+
+        function targetData($this) {
+            let file_obj = $this.files[0];
+            var fm = new FormData();
+            fm.append('file', file_obj);
+
+            $.ajax({
+                url: '/file_upload', method: 'post', processData: false,
+                contentType: false, data: fm, success: function (data) {
+                    console.log(data)
+                }
+            })
+
+
+        }
+    </script>
+
+{% endblock %}

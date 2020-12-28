@@ -1,0 +1,53 @@
+{
+    "imagePath": "int8_0077_pan_w6_h2.png",
+    "imageHeight": 1024,
+    "imageWidth": 1024,
+    "shapes": [
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    38.0,
+                    91.0
+                ],
+                [
+                    193.0,
+                    91.0
+                ],
+                [
+                    193.0,
+                    229.0
+                ],
+                [
+                    38.0,
+                    229.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    565.0,
+                    593.0
+                ],
+                [
+                    703.0,
+                    593.0
+                ],
+                [
+                    703.0,
+                    720.0
+                ],
+                [
+                    565.0,
+                    720.0
+                ]
+            ]
+        }
+    ]
+}

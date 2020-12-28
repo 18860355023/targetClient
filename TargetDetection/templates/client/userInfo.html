@@ -1,0 +1,171 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        thead {
+            width: calc(100% - 1em);
+        }
+
+        th.last {
+            width: 17px;
+        }
+
+        a:hover, a:visited {
+            text-decoration: none;
+        }
+
+        thead, tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tbody {
+            display: block;
+            height: calc(100vh - 240px);
+            overflow-y: scroll;
+        }
+
+        tbody > tr > td, tbody > tr > th {
+            line-height: 2em;
+            white-space: nowrap;
+            font-size: 10px;
+            overflow: hidden;
+        }
+
+        thead th {
+            border: none;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+
+    <div class="clearfix" style="margin-top: 40px;">
+        <table class="table table-hover table-bordered table-striped pull-left" id="userInfo"
+               style="width: 60%;">
+            <thead>
+            <tr>
+                <th width="50px">编号</th>
+                <th>注册时间</th>
+                <th>用户名</th>
+                <th>级别</th>
+                <th width="130px">操作(改密码/删除)</th>
+                <th width="17px"></th>
+            </tr>
+            </thead>
+            <tbody id="emp">
+            {% for user in data.users %}
+                <tr>
+                    <td width="50px">{{ user.id }}</td>
+                    <td class="">{{ user.register_time }}</td>
+                    <td class="username">{{ user.name }}</td>
+                    <td>{{ user.level }}</td>
+                    <td width="130px">
+                        <span class="btn-success"
+                              style="border: 0;display: inline-block;width: 60px;cursor: pointer;text-align: center"
+                              onclick="updatePwd($(this))">修改密码</span>
+                        <span class="btn-danger"
+                              style="border: 0;display: inline-block;width: 30px;cursor: pointer;margin-left: 15px;text-align: center"
+                              onclick="deleteUser($(this))">删除</span>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="pull-left" style="width: 30%;margin-left: 60px;">
+            <form class="form-inline" style="text-align: center;margin-bottom: 20px;">
+                <div class="form-group clearfix" style="margin-right: 20px;">
+                    <label for="addUser" class="pull-right" style="margin-left: 10px;">添加新用户</label>
+                    <input type="radio" id="addUser" class="pull-left" name="lookOrDelete" checked>
+                </div>
+                <div class="form-group clearfix">
+                    <label for="selfInfo" class="pull-right" style="margin-left: 10px;">个人信息</label>
+                    <input type="radio" id="selfInfo" class="pull-left" name="lookOrDelete">
+                </div>
+            </form>
+            <form style="box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);height: calc(100vh - 300px);padding: 20px">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" class="form-control" id="username" placeholder="Username"
+                           onkeyup="value=value.replace(/[^\w\.\/]/ig,'')">
+                </div>
+                <div class="form-group">
+                    <label for="pwd">密码</label>
+                    <input type="password" class="form-control" id="pwd" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <label for="pwd2">确认密码</label>
+                    <input type="password" class="form-control" id="pwd2" placeholder="SurePassword">
+                </div>
+                <div class="form-group">
+                    <label for="" style="margin-right: 20px;">级别:</label>
+                    <input type="radio" class="form-inline" value="1" id="" name="level"> 标注人员
+                    <input type="radio" class="form-inline" value="2" style="margin-left: 20px;" id="" name="level">
+                    检查人员
+                </div>
+                <p class="error" style="font-size: 10px;color: red;display: none">两次密码输入不一致,请重新输入!</p>
+                <div class="btn btn-info form-control" onclick="register()">添加标注/检查人员</div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function register() {
+            var username = $('#username').val();
+            var pwd = $('#pwd').val();
+            var pwd2 = $('#pwd2').val();
+            var level = $("input[name='level']:checked").val();
+            if (username && pwd && pwd2 && level) {
+                if (pwd == pwd2) {
+                    $('.error').get(0).style.display = 'none';
+                    $.ajax({
+                        url: '/register',
+                        method: 'post',
+                        data: {'user': username, 'pwd': pwd, 'level': level},
+                        success: function (res) {
+                            if (res.status == 200) {
+                                location.reload()
+                            } else {
+                                alert(res.msg);
+                            }
+                        }
+                    })
+                } else {
+                    $('.error').get(0).style.display = 'block';
+                }
+            } else {
+                alert('输入框不能为空')
+            }
+        }
+
+        function deleteUser($this) {
+            let parentEle = $this.parent().parent();
+            var nid = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/delete_user', method: 'post', data: {'nid': nid}, success: function (res) {
+                    {#alert(res);#}
+                    parentEle.remove();
+                }
+            })
+        }
+
+        function updatePwd($this) {
+            var nid = $this.parent().siblings()[0].innerText;
+            var new_pwd = prompt('请输入新密码:');
+            if (new_pwd) {
+                $.ajax({
+                    url: '/update_pwd',
+                    method: 'post',
+                    data: {'nid': nid, 'new_pwd': new_pwd},
+                    success: function (res) {
+                        alert(res);
+                    }
+                })
+            }
+
+        }
+
+    </script>
+
+{% endblock %}

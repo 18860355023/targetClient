@@ -1,0 +1,99 @@
+{
+    "imagePath": "int8_0147_pan_w8_h2.png",
+    "imageHeight": 1024,
+    "imageWidth": 1024,
+    "shapes": [
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    78.0,
+                    241.0
+                ],
+                [
+                    136.0,
+                    241.0
+                ],
+                [
+                    136.0,
+                    357.0
+                ],
+                [
+                    78.0,
+                    357.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    260.0,
+                    317.0
+                ],
+                [
+                    302.0,
+                    317.0
+                ],
+                [
+                    302.0,
+                    385.0
+                ],
+                [
+                    260.0,
+                    385.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    194.0,
+                    633.0
+                ],
+                [
+                    242.0,
+                    633.0
+                ],
+                [
+                    242.0,
+                    707.0
+                ],
+                [
+                    194.0,
+                    707.0
+                ]
+            ]
+        },
+        {
+            "shape_type": "polygon",
+            "label": "1",
+            "fill_color": null,
+            "points": [
+                [
+                    236.0,
+                    428.0
+                ],
+                [
+                    273.0,
+                    428.0
+                ],
+                [
+                    273.0,
+                    481.0
+                ],
+                [
+                    236.0,
+                    481.0
+                ]
+            ]
+        }
+    ]
+}

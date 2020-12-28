@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <title>目标检测标记平台:::注册/登录</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+<div class="content">
+    <div class="form sign-in">
+        <h2>欢迎回来</h2>
+        <label>
+            <span>用户名</span>
+            <input type="text" id="username" onkeyup="value=value.replace(/[^\w\.\/]/ig,'')"/>
+        </label>
+        <label>
+            <span>密码</span>
+            <input type="password" id="password"/>
+        </label>
+        <p class="forgot-pass" id="error-tip" style="color: red;font-size: 12px;"></p>
+        <p class="forgot-pass"><a href="javascript:">忘记密码？</a></p>
+        <button type="button" class="submit" onclick="login()">登 录</button>
+        {#        <button type="button" class="fb-btn">使用 <span>WeChat</span> 帐号登录</button>#}
+    </div>
+    <div class="sub-cont">
+        <div class="img">
+            <div class="img__text m--up">
+                <h2>检查标注？</h2>
+                <p>立即注册，管理标注！</p>
+            </div>
+            <div class="img__text m--in">
+                <h2>已有帐号？</h2>
+                <p>有帐号就登录吧，好久不见了！</p>
+            </div>
+            <div class="img__btn">
+                <span class="m--up">注 册</span>
+                <span class="m--in">登 录</span>
+            </div>
+        </div>
+        <div class="form sign-up">
+            <h2>立即注册</h2>
+            <label>
+                <span>用户名</span>
+                <input type="text" onkeyup="value=value.replace(/[^\w\.\/]/ig,'')"/>
+            </label>
+            <label>
+                <span>密码</span>
+                <input type="password"/>
+            </label>
+            <label>
+                <span>确认密码</span>
+                <input type="password"/>
+            </label>
+            <button type="button" class="submit">注 册</button>
+            {#            <button type="button" class="fb-btn">使用 <span>WeChat</span> 帐号注册</button>#}
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/script.js"></script>
+</body>
+<script src="/static/js/jquery-3.3.1.min.js"></script>
+<script>
+    function login() {
+        var username = $('#username').val();
+        var password = $('#password').val();
+        if (username && password) {
+            $.ajax({
+                url: '/login', method: 'post', data: {'user': username, 'pwd': password}, success: function (data) {
+                    if (data == 101) {
+                        $('#error-tip').get(0).innerText = '账号不存在!'
+                    } else if (data == 102) {
+                        $('#error-tip').get(0).innerText = '密码错误!'
+                    } else {
+                        location.href = data;
+                        {#console.log(data)#}
+                    }
+                }
+            })
+        } else {
+            alert('输入框不能为空!')
+        }
+    }
+
+    function register() {
+
+    }
+
+    $(document).keydown(function (e) {
+        if (e.keyCode == 13) {
+            {#login()#}
+            console.log($('.submit').text())
+        }
+    });
+</script>
+
+</html>

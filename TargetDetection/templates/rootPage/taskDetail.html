@@ -1,0 +1,179 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left" id="u_name"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix">
+        <div class="pull-left">
+            <div class="clearfix">
+                <span class="pull-left">未提交任务::</span>
+                <label for="se"></label>
+                <select name="" id="se" onchange="changeTask(this.id)">
+                    {% for path in data.uts %}
+                        {% if path.path == data.default_path %}
+                            <option value="{{ path.path }}" selected>{{ path.path }}</option>
+                        {% else %}
+                            <option value="{{ path.path }}">{{ path.path }}</option>
+                        {% endif %}
+
+                    {% endfor %}
+                </select>
+                <button class="btn btn-success pull-right" onclick="submitTask()">提交任务</button>
+                <button class="btn btn-info pull-right" style="margin-right: 20px;" onclick="checkTarget()">检查标注
+                </button>
+            </div>
+
+            <table class="table table-hover table-bordered table-striped" id="taskInfo">
+                <thead>
+                <tr>
+                    <th>task-time</th>
+                    <th>task-name</th>
+                    <th>task-path</th>
+                    <th>target-user</th>
+                    <th>file-num</th>
+                    <th>task-status</th>
+                </tr>
+                </thead>
+                <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto">
+                {% for task in data.task_list %}
+                    <tr>
+                        <td>{{ task.addtime }}</td>
+                        <td>{{ task.task_name }}</td>
+                        <td>{{ task.task_path }}</td>
+                        <td>{{ task.target_user }}</td>
+                        <td>{{ task.file_num }}</td>
+                        <td class="status">{{ task.task_status }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+
+    <script>
+        function changeTask(id) {
+            console.log(document.getElementById(id).value);
+            $.ajax({
+                url: '/task_detail',
+                method: 'post',
+                data: {'path': document.getElementById(id).value},
+                success: function (data) {
+                    console.log(data);
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td>' + data[task]['name'] + '</td><td>' + data[task]['user'] + '</td><td>' + data[task]['path'] + '</td><td>' + data[task]['num'] + '<td>' + data[task]['status'] + '</td></tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                }
+            })
+        }
+
+
+        function checkTarget() {
+            /**
+             var st_list = [];
+             for (var i = 0; i < $('.status').length; i++) {
+                {#console.log($('.status').get(i).innerText);#}
+                st_list.push($('.status').get(i).innerText)
+            }
+             if (st_list.indexOf('unfinished') != -1) {
+                alert('请等待标注人员完成任务后再进行操作!')
+            } else {
+                $.ajax({
+                    url: '/open_label',
+                    method: 'post',
+                    data: {'path': $('#se').val()},
+                    success: function (data) {
+                        console.log(data)
+                    }
+                })
+            }
+             **/
+            $.ajax({
+                url: '/open_label',
+                method: 'post',
+                data: {'path': $('#se').val()},
+                success: function (data) {
+                    console.log(data)
+                }
+            })
+        }
+
+        function clearTask() {
+            $.ajax({
+                url: '/clear_task', method: 'get', success: function (res) {
+                    console.log(res)
+                }
+            })
+        }
+
+        function getUserName() {
+            {#console.log($('input[name=ck]:checked').length);#}
+            {#console.log($('input[name=ck]:checked').get(0).value);#}
+            let ss = $('input[name=ck]:checked');
+            for (var i = 0; i < ss.length; i++) {
+                s = ss[i].value;
+                console.log(s);
+            }
+        }
+
+        function assignedTask() {
+            var addr = $('#fPath').val();
+            let nameList = [];
+            let ss = $('input[name=ck]:checked');
+            for (var i = 0; i < ss.length; i++) {
+                var s = ss[i].value;
+                nameList.push(s);
+            }
+            console.log(addr, nameList);
+            $.ajax({
+                url: '/up_task',
+                method: 'post',
+                data: {'addr': addr, 'nameList': JSON.stringify(nameList)},
+                success: function (data) {
+                    console.log(data)
+                }
+            })
+        }
+
+
+        function submitTask() {
+            /**
+             var ss = $('.status');
+             var status_list = [];
+             for (var i = 0; i < ss.length; i++) {
+                {#console.log(ss[i].innerText);#}
+                status_list.push(ss[i].innerText);
+            }
+             if (status_list.indexOf('unfinished') != -1) {
+                alert('任务未全部完成,不能提交!')
+            }**/
+
+            $.ajax({
+                url: '/submit_task',
+                method: 'post',
+                data: {'path': $('#se').val(),'user':$('#u_name').text()},
+                success: function (data) {
+                    console.log(data);
+                }
+            })
+
+        }
+
+
+    </script>
+
+{% endblock %}

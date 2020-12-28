@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>目标检测客户端</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="shortcut icon" href="#"/>
+    <script src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css">
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+
+    <style>
+        .mmm > li {
+            list-style: none;
+            margin: 0;
+            padding: 0 20px;
+            border-bottom: 1px solid gainsboro;
+        }
+
+        .mmm > li:last-child {
+            list-style: none;
+            margin: 0;
+            padding: 0 20px;
+            border-bottom: 0;
+        }
+
+        .ss {
+            float: right;
+        }
+
+        .imt {
+            width: 50%;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+        }
+
+        .oneFile {
+            width: 30%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
+            color: gainsboro;
+            text-align: center;
+        }
+        .cloud{
+            height: 300px;
+            line-height: 300px;
+        }
+
+        .icon-text {
+            font-size: 20px;
+        }
+
+        .icon-text:first-child {
+            font-size: 60px;
+        }
+
+
+        .icon-text:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div style="border: 1px solid lightcoral;margin: 0;" class="clearfix">
+    <div style="width: 50%;" class="pull-left clearfix">
+        <div class="pull-left" style="width: 30%;padding: 20px">
+            <div class="form-group">
+                <label for="ini_data_name">原始数据集命名</label>
+                <input type="text" id="ini_data_name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="data_field">数据集所属领域</label>
+                <select id="data_field" class="form-control">
+                    {% for field in data.fields %}
+                        <option value="{{ field.id }}">{{ field.field_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="cate_exits">数据集是否存在标注</label>
+                <div>
+                    <input type="radio" id="rtt" name="tg" value="true" checked onclick="nb_up_file()">
+                    <label for="rtt">是</label>
+                </div>
+                <div>
+                    <input type="radio" id="rff" value="false" name="tg" onclick="ban_up_file()">
+                    <label for="rff">否</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-inline pull-left clearfix" style="width: 70%">
+            <div class="form-group imt pull-left">
+                <label for="img_data">导入原始图片集</label>
+                <input type="file" id="img_data" webkitdirectory multiple onchange="imgData(this)">
+                <div id="img_name" style="height: 200px;overflow: auto"></div>
+            </div>
+            <div class="form-group imt pull-left">
+                <label for="target_data">导入标注文件集</label>
+                <input type="file" id="target_data" webkitdirectory multiple onchange="targetData(this)">
+                <div id="target_name" style="height: 200px;overflow: auto"></div>
+            </div>
+        </div>
+        <div class="btn btn-info form-control" onclick="submit_ini_data()">上传数据集</div>
+    </div>
+    <div class="pull-left form-group oneFile">
+        {#        <label for="config_file" class="cloud">#}
+        {#            <img src="/static/images/upload_cloud.png" alt="">#}
+        {#        </label>#}
+        <label for="config_file" class="cloud">
+            <span class="icon-text glyphicon glyphicon-cloud-upload"></span>
+            <span class="icon-text">文件上传</span>
+{#            <p class="icon-text">拖动文件到此处</p>#}
+        </label>
+        <p style="color: indianred;font-size: 14px;">注: 暂不支持拖动文件上传</p>
+        <input type="file" id="config_file" onchange="configFileUpload(this)" accept=".py" style="display: none;">
+    </div>
+    <form class="pull-left">
+        <div class="form-group">
+            <label for="exampleInputEmail1">学习率</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Email">
+        </div>
+        <div class="form-group">
+            <label for="exampleInputPassword1">学习epoch数</label>
+            <input type="text" class="form-control" id="exampleInputPassword1" placeholder="Password">
+        </div>
+        <div class="form-group">
+            <label for="exampleInputPassword1">step epoch数</label>
+            <input type="text" class="form-control" id="exampleInputPassword1" placeholder="Password">
+        </div>
+        <div class="form-group">
+            <label for="exampleInputPassword1">网络输入图像resize尺寸</label>
+            <input type="text" class="form-control" id="exampleInputPassword1" placeholder="Password">
+        </div>
+        <div class="btn btn-info form-control">Submit</div>
+    </form>
+</div>
+<div class="clearfix">
+    <div class="pull-left" style="width: 30%;padding-left: 30px">
+        <div>
+            <label for="">所属领域:</label>
+            <select name="" id="">
+                {% for field in data.fields %}
+                    <option value="{{ field.id }}">{{ field.field_name }}</option>
+                {% endfor %}
+            </select>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>数据集名称</th>
+                    <th>数据集类别和数量</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for k,v in data.d_dic.items() %}
+                    <tr>
+                        <td style="line-height: calc(100%/2 + 5px)">{{ k }}</td>
+                        <td>
+                            {% if v | length == 1 %}
+                                {% for o,p in v.items() %}
+                                    <span class="pull-left">{{ o }} {{ p }}</span>
+                                    <span class="btn-info pull-right" onclick="oneSelCate($(this))">选中</span>
+                                {% endfor %}
+                            {% else %}
+                                <ul style="margin: 0;padding: 0;" class="mmm">
+                                    {% for m,n in v.items() %}
+                                        <li class="clearfix">
+                                            <span class="pull-left">{{ m }} {{ n }}</span>
+                                            <span class="btn-danger pull-right" onclick="moreSelCate($(this))">选中</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div style="width: 20%;height: 600px" class="pull-left">
+        <div>当前制作目标数据集记录</div>
+        <div style="height: 300px;border: 1px solid gainsboro">
+            <ul class="list-group">
+                {% for log in data.data_logs %}
+                    <li class="list-group-item">{{ log.dat_name }} {{ log.cate }} {{ log.num }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="btn btn-success form-control" onclick="resDstData()">生成数据集</div>
+    </div>
+    <div class="pull-left" style="width: 30%;padding-left: 30px">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>目标数据集名称</th>
+                <th>数据集类别和数量</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for k,v in data.kk_dic.items() %}
+                <tr>
+                    <td style="line-height: calc(100%/2 + 5px)">{{ k }}</td>
+                    <td>
+                        {% for m,n in v.items() %}
+                            <span>{{ m }}</span>
+                            <span>:</span>
+                            <span style="margin-right: 20px">{{ n }}</span>
+                        {% endfor %}
+                    </td>
+                    <td><span class="btn-info pull-right" onclick="split_data($(this))">划分训测集</span></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+</body>
+<script>
+    let se = window.sessionStorage;
+
+    function alertS(n, c) {
+        Swal.mixin({
+            input: 'text',
+            confirmButtonText: 'Next &rarr;',
+            showCancelButton: true,
+            allowOutsideClick: false,
+            progressSteps: ['1', '2']
+        }).queue([
+            {
+                title: '筛选数量',
+                text: '请输入所需数据数量:'
+            },
+            {
+                title: '重命名',
+                text: '请输入类别名称:'
+            },
+        ]).then((result) => {
+            if (result.value) {
+                const answers = JSON.stringify(result.value);
+                Swal.fire({
+                    title: '输入确认',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    allowOutsideClick: false,
+                    html: `<pre><code>${answers}</code></pre>`,
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'submit',
+                }).then((result) => {
+                    if (result.value) {
+                        console.log(result.value);
+                        console.log(answers);
+                        $.ajax({
+                            url: '/dst_data_config',
+                            method: 'post',
+                            data: {
+                                'num': JSON.parse(answers)[0],
+                                'new_cate': JSON.parse(answers)[1],
+                                'name': n,
+                                'old_cate': c
+                            },
+                            success: function (data) {
+                                console.log(data)
+                            }
+                        })
+                    }
+                });
+            }
+        })
+    }
+
+    function oneSelCate($this) {
+        console.log($this.parent());
+        var ini_name = $this.parent().siblings()[0].innerText;
+        var ini_cate = $this.siblings()[0].innerText.split(' ')[0];
+        alertS(ini_name, ini_cate)
+    }
+
+    function moreSelCate($this) {
+        console.log($this.parent().parent().parent().siblings()[0].innerText);
+        var ini_name = $this.parent().parent().parent().siblings()[0].innerText;
+        var ini_cate = $this.siblings()[0].innerText.split(' ')[0];
+        {#console.log(ini_data);#}
+        alertS(ini_name, ini_cate)
+    }
+
+
+    function resDstData() {
+        var name = prompt('请输入目标数据集名称');
+        $.ajax({
+            url: '/res_dst_data', method: 'post', data: {'name': name}, success: function (data) {
+                console.log(data)
+            }
+        })
+    }
+
+    function imgData($this) {
+        let sss1 = '';
+        let im = $('#img_name');
+        im.empty();
+        let nsss2 = '<img src="/static/images/loading.gif" alt="loading gif" style="margin:70px">';
+        $(nsss2).appendTo(im);
+        {#let datas = new FormData();#}
+        let n = 0;
+        for (var i = 0; i < $this.files.length; i++) {
+            {#console.log($this.files[i]);#}
+            var str = '<li>' + $this.files[i].name + '</li>';
+            sss1 += str;
+            let datas = new FormData();
+            datas.append('file', $this.files[i]);
+            $.ajax({
+                url: '/ini_img_upload', method: 'post', processData: false,
+                contentType: false, data: datas, success: function (data) {
+                    {#console.log(data);#}
+                    n += 1;
+                    console.log('tupian::', n);
+                    if (n == $this.files.length) {
+                        im.empty();
+                        let nsss = '<ul style="margin-top:10px">' + sss1 + '</ul>';
+                        $(nsss).appendTo(im);
+                    }
+                }
+            });
+        }
+    }
+
+
+    function targetData($this) {
+        let ele = '';
+        let tg = $('#target_name');
+        tg.empty();
+        let loading_img = '<img src="/static/images/loading.gif" alt="loading gif" style="margin:70px">';
+        $(loading_img).appendTo(tg);
+        let add_num = 0;
+        for (var i = 0; i < $this.files.length; i++) {
+            var name_li = '<li>' + $this.files[i].name + '</li>';
+            ele += name_li;
+            let data_list = new FormData();
+            data_list.append('file', $this.files[i]);
+            $.ajax({
+                url: '/ini_file_upload', method: 'post', processData: false,
+                contentType: false, data: data_list, success: function (data) {
+                    {#console.log('mm', data);#}
+                    add_num += 1;
+                    if (add_num == $this.files.length) {
+                        tg.empty();
+                        let file_name_list = '<ul>' + ele + '</ul>';
+                        $(file_name_list).appendTo(tg);
+                    }
+                }
+            })
+        }
+
+
+    }
+
+
+    function configFileUpload($this) {
+        let file_obj = $this.files[0];
+        var fm = new FormData();
+        fm.append('file', file_obj);
+
+        $.ajax({
+            url: '/config_upload', method: 'post', processData: false,
+            contentType: false, data: fm, success: function (data) {
+                console.log(data)
+            }
+        })
+    }
+
+
+    function upload_focus() {
+        console.log('aaaa')
+    }
+
+    function nb_up_file() {
+        $("#target_data").removeAttr('disabled');
+    }
+
+    function ban_up_file() {
+        $("#target_data").attr('disabled', 'disabled');
+    }
+
+
+    function submit_ini_data() {
+        var su = $("input[name='tg']:checked").val();
+        var name = $("#ini_data_name").val();
+        var field = $("#data_field").val();
+
+        if (su && name && field) {
+            $.ajax({
+                url: '/all_info',
+                method: 'post',
+                data: {'su': su, 'name': name, 'field': field},
+                success: function (data) {
+                    console.log(data);
+                    if (data == 500) {
+                        alert('请选取上传文件夹');
+                        location.reload()
+                    }
+                }
+            })
+        } else {
+            alert('no data')
+        }
+    }
+
+
+    function split_data($this) {
+        Swal.fire({
+            title: '选取划分训测比例',
+            {#type: 'question',#}
+            input: 'range',
+            inputAttributes: {
+                min: 0,
+                max: 100,
+                step: 1
+            },
+            inputValue: 50
+        }).then((res) => {
+            console.log(res.value);
+            var num = res.value;
+            console.log($this.parent().siblings()[0].innerText);
+            var name = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/split_data', method: 'post', data: {'name': name, 'num': num}, success: function (data) {
+                    console.log(data)
+                }
+            })
+
+        });
+    }
+</script>
+</html>

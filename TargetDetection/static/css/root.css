@@ -1,0 +1,95 @@
+a:hover {
+    text-decoration: none;
+}
+
+#mainTitle {
+    height: 40px;
+    line-height: 40px;
+}
+
+#mainDiv {
+    width: calc(100vw - 140px);
+    margin: 10px 60px 20px 60px;
+    height: calc(100vh - 100px);
+    /*border: 1px solid silver;*/
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+    border-radius: 40px;
+}
+
+.nav-list {
+    width: 200px;
+    /*height: calc(100vh - 160px);*/
+    height: 100%;
+    overflow: auto;
+    float: left;
+    /*background-color: #C0C4CC;*/
+    border-radius: 40px 0 0 40px;
+    border: 1px solid #ddd;
+}
+
+.nav-list .nav-option {
+    text-align: center;
+    color: grey;
+}
+
+.nav-list .nav-option-root {
+    text-align: center;
+    color: grey;
+}
+
+.nav-list .nav-option:hover {
+    background-color: #409EFF;
+    cursor: pointer;
+    color: #fff;
+}
+
+.nav-list .nav-option-root:hover {
+    background-color: #409EFF;
+    cursor: pointer;
+    color: #fff;
+}
+
+.nav-list .nav-option-root:hover a {
+    color: #fff;
+}
+
+.nav-title {
+    text-align: center;
+    /*background-color: #409EFF;*/
+    height: 40px;
+    border: 0;
+}
+
+#mainContent {
+    float: left;
+    width: calc(100vw - 380px);
+    height: calc(100vh - 100px);
+    margin: 0 10px;
+}
+
+
+thead {
+    width: calc(100% - 1em);
+}
+
+thead, tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+tbody {
+    display: block;
+    overflow-y: scroll;
+}
+
+tbody > tr > td, tbody > tr > th {
+    line-height: 2em;
+    white-space: nowrap;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+thead th {
+    /*border: none;*/
+}

@@ -1,0 +1,44 @@
+{% extends 'client/base.html' %}
+{% block static %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>{% endblock %}
+{% block style %}
+    <style>
+        .eval {
+            width: 600px;
+            padding: 60px;
+        }
+    </style>
+{% endblock %}
+{% block mainbox %}
+    <form class="pull-left eval">
+        <div class="form-group">
+            <label for="gt">gt folder:</label>
+            <input type="text" class="form-control" id="gt" placeholder="gt 路径">
+        </div>
+        <div class="form-group">
+            <label for="pre">pre folder:</label>
+            <input type="text" class="form-control" id="pre" placeholder="pre 路径">
+        </div>
+        <div class="form-group">
+            <label for="ct">cats</label>
+            <input type="text" class="form-control" id="ct" placeholder="类别名(多个用逗号隔开)">
+        </div>
+        <div class="btn btn-info form-control" onclick="runEval()">Submit</div>
+        {#                <div class="btn btn-success form-control" onclick="split_data($(this))">划分训测比</div>#}
+    </form>
+
+    <script>
+        function runEval() {
+            var gt = $('#gt').val();
+            var pre = $('#pre').val();
+            var ct = $('#ct').val();
+            if (gt && pre && ct) {
+                $.ajax({
+                    url: '/run_eval', method: 'post', data: {'gt': gt, 'pre': pre, 'ct': ct}, success: function (data) {
+                        console.log(data)
+                    }
+                })
+            }
+        }
+    </script>
+{% endblock %}

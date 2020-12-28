@@ -1,0 +1,267 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix" style="margin: 0">
+        <form style="width: 260px;margin: 10px 40px 40px 40px" class="pull-left clearfix">
+            <p style="text-align: center;font-size: 18px;color: #31b0d5;">标注任务分配</p>
+            <hr style="margin-top: 4px">
+            <div class="form-group">
+                <label for="fPath">选取来源文件夹路径:</label>
+                <select class="form-control" name="" id="fPath" style="width:260px;overflow: hidden"
+                        onchange="changePath($(this))">
+                    {% for fp in data.init_lists %}
+                        <option value="{{ fp.path }}">{{ fp.path }}</option>
+                    {% endfor %}
+                </select>
+                <p id="path-error" style="color:red;font-size: 10px;"></p>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注人员:</label>
+                <div style="height: calc(100vh - 600px);overflow: auto;padding: 16px;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+                    {% for user in range(0,data.target_users | length,2) %}
+                        <div class="clearfix">
+                            {% if data.target_users[user] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user][0] }}"> {{ data.target_users[user][0] }}
+                                </p>
+                            {% endif %}
+                            {% if data.target_users[user + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user + 1][0] }}"> {{ data.target_users[user + 1][0] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注类别:</label>
+                <div id="cateDiv"
+                     style="height: 100px;overflow: auto;padding: 16px;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+                    {% for cate in range(0,data.default_cate_list|length,2) %}
+                        <div class="clearfix">
+                            {% if data.default_cate_list[cate] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.default_cate_list[cate] }}"> {{ data.default_cate_list[cate] }}
+                                </p>
+                            {% endif %}
+                            {% if data.default_cate_list[cate + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.default_cate_list[cate + 1] }}"> {{ data.default_cate_list[cate + 1] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">是否交叉标注:</label>
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="true"> 是
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="false" checked>
+                否
+            </div>
+            <p class="none-error" style="color:red;font-size: 10px;"></p>
+            <div class="form-group">
+                <button type="button" class="btn btn-info form-control" onclick="assignedTask()">随机均等分配任务</button>
+            </div>
+        </form>
+
+        <div class="pull-left"
+             style="margin-top: 50px;height:calc(100vh - 300px);width:calc(100vw - 750px);box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+            <table class="table table-hover table-bordered table-striped" id="taskInfo">
+                <thead>
+                <tr>
+                    <th>id</th>
+                    <th>task-time</th>
+                    <th>task-name</th>
+                    <th>target-user-status</th>
+                    <th>check-user</th>
+                    <th>task-path</th>
+                    <th>file-num</th>
+                    <th>task-status</th>
+                </tr>
+                </thead>
+                {% if data.task_list %}
+                    <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto">
+                    {% for task in data.task_list %}
+                        <tr>
+                            <td>{{ task.id }}</td>
+                            <td>{{ task.addtime }}</td>
+                            <td>{{ task.task_name }}</td>
+                            <td>{{ task.target_user_status }}</td>
+                            {% if task.check_user %}
+                                <td>{{ task.check_user }}</td>
+                            {% else %}
+                                <td>
+                                    <select name="" id="" class="checkUser" onchange="selectedCheckUser($(this))">
+                                        <option value="null">未选择</option>
+                                        {% for user in data.check_users %}
+                                            <option value="{{ user[0] }}">{{ user[0] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            {% endif %}
+                            <td>{{ task.task_path }}</td>
+                            <td>{{ task.file_num }}</td>
+                            <td>{{ task.task_status }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% else %}
+                    <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto"></tbody>
+                {% endif %}
+
+            </table>
+        </div>
+
+    </div>
+
+
+    <script>
+        function openLabelMe() {
+            $.ajax({
+                url: '/labelme',
+                method: 'get',
+                success: function (data) {
+                    console.log(data)
+                }
+            })
+        }
+
+        function fPathCheck() {
+            console.log('shiqujiaodian');
+            {#var fPath = $('#fPath').val();#}
+            var error = $('#path-error').get(0);
+            $('#fPath').val() == '' ? error.innerText = 'error: 文件路径不能为空' : error.innerText = '';
+        }
+
+        $('.nav-option').click(function () {
+            {#console.log($(this).text());#}
+            var labels = $(this).siblings();
+            {#console.log(labels.length);#}
+            for (var i = 0; i < labels.length; i++) {
+                console.log(labels.get(i));
+                labels.get(i).classList.remove('active')
+            }
+
+            $(this).addClass('active');
+            $.ajax({
+                url: '/change_label', method: 'post', data: {'path': $(this).text()}, success: function (data) {
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td>' + data[task]['name'] + '</td><td>' + data[task]['user'] + '</td><td>' + data[task]['path'] + '</td><td>' + data[task]['num'] + '</td><td>' + data[task]['status'] + '</td></tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                }
+            })
+        });
+
+
+        function selectedList(node_list) {
+            var re_list = [];
+            for (var i = 0; i < node_list.length; i++) {
+                re_list.push(node_list[i].value)
+            }
+            return re_list
+        }
+
+
+        function assignedTask() {
+            var addr = $('#fPath option:checked').val();
+            {#console.log(addr);#}
+            {#let nameList = [];#}
+            var ss = $('input[name=target]:checked');
+            var nameList = selectedList(ss);
+            {#console.log(nameList);#}
+            var nst = $('input[name=cate]:checked');
+            var cateList = selectedList(nst);
+            {#console.log(cateList);#}
+            var count = $("input[name='people']:checked").val();
+            {#console.log(count);#}
+
+            if (addr != '' && nameList.length > 0 && cateList.length > 0 && count) {
+                $('.none-error').get(0).innerText = '';
+                $.ajax({
+                    url: '/up_task',
+                    method: 'post',
+                    data: {
+                        'addr': addr,
+                        'nameList': JSON.stringify(nameList),
+                        'cateList': JSON.stringify(cateList),
+                        'count': count
+                    },
+                    success: function (data) {
+                        if (data == 'ok') {
+                            location.reload()
+                        }
+                    }
+                })
+            } else {
+                $('.none-error').get(0).innerText = 'error: 路径和标注人员不能为空'
+            }
+        }
+
+        function changePath($this) {
+            $('#cateDiv').empty();
+            var path = $this.val();
+            $.ajax({
+                url: '/get_path_cate', method: 'post', data: {'path': path}, success: function (data) {
+                    console.log(data);
+                    if (data) {
+                        let str1 = '';
+                        let str2 = '';
+                        let str3 = '';
+                        for (var i = 0; i < data.length; i += 2) {
+                            if (data[i]) {
+                                var st1 = '<p style="width: 50%" class="pull-left"><input type="checkbox" name="cate" value="' + data[i] + '"> ' + data[i] + '</p>';
+                                str1 += st1;
+                            }
+                            if (data[i + 1]) {
+                                var st2 = '<p style="width: 50%" class="pull-left"><input type="checkbox" name="cate" value="' + data[i + 1] + '"> ' + data[i + 1] + '</p>';
+                                str2 += st2;
+                            }
+                            str3 = str1 + str2;
+                        }
+                        $(str3).appendTo($('#cateDiv'))
+                    }
+                }
+            })
+        }
+
+
+        function selectedCheckUser($this) {
+            console.log($this.val());
+            var v = $this.val();
+            var id = $this.parent().siblings()[0].innerText;
+            if (v != 'null') {
+                $.ajax({
+                    url: 'set_check_user', method: 'post', data: {'id': id, 'name': v}, success: function (data) {
+                        console.log(data);
+                        if (data == 200) {
+                            location.reload()
+                        }
+                    }
+                })
+            }
+        }
+
+
+    </script>
+
+{% endblock %}

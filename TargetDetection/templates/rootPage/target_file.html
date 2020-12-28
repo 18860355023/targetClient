@@ -1,0 +1,225 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix">
+        <form class="form-inline clearfix">
+            <div class="form-group filter-path pull-left">
+                <label for="initPath">init path: </label>
+                <select name="" id="initPath" class="form-control" onchange="filterFilePath($(this))">
+                    <option value="all">全部文件</option>
+                    {% for fpt in data.init_lists %}
+                        <option value="{{ fpt.path }}">{{ fpt.path }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group tip-msg pull-left"
+                 style="display: none;color: red;margin-left: 20px;height: 34px;line-height: 34px"></div>
+            <div class="pull-right btn btn-danger">批量删除</div>
+            <div class="pull-right btn btn-info">全部导出</div>
+        </form>
+        <div style="width:100%;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+            <table class="table table-hover table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th width="50px">ID</th>
+                    <th>FileName</th>
+                    <th width="85px">CheckUser</th>
+                    <th>IniPath</th>
+                    <th width="80px">Option</th>
+                </tr>
+                </thead>
+                {% if data.dst_files %}
+                    <tbody id="emp" style="height: calc(100vh - 200px);overflow: auto">
+                    {% for task in data.all_files %}
+                        <tr>
+                            <td width="50px">{{ task['id'] }}</td>
+                            <td title="{{ task['file_name'] }}">{{ task['file_name'] }}</td>
+                            <td width="85px">{{ task['check_user'] }}</td>
+                            <td title="{{ task['ini_path'] }}">{{ task['ini_path'] }}</td>
+                            <td width="80px">
+                                <button style="border: 0;background-color:red;color: white;"
+                                        onclick="deleteTask($(this))">delete
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% else %}
+                    <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto"></tbody>
+                {% endif %}
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+
+        let tm = $('.tip-msg');
+
+        function GMTToStr(time) {
+            let date = new Date(time);
+            let ss = date.getFullYear() + '-' +
+                (date.getMonth() + 1) + '-' +
+                date.getDate() + ' ' +
+                date.getHours() + ':' +
+                date.getMinutes() + ':' +
+                date.getSeconds();
+            return ss
+        }
+
+        function deleteTask($this) {
+            console.log($this.parent().siblings()[0].innerText);
+            var nid = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/delete_task', method: 'post', data: {'id': nid}, success: function (data) {
+                    {#console.log(data);#}
+                    location.reload()
+                }
+            })
+        }
+
+        function filterFilePath($this) {
+            var path = $this.val();
+            if (path) {
+                $.ajax({
+                    url: '/filter_file_path', method: 'post', data: {'path': path}, success: function (data) {
+                        if (data.length > 0) {
+                            tm.get(0).innerText = 'search data success !';
+                            tm.fadeIn('fast').fadeOut(2000);
+                            let all_str = '';
+                            for (var t in data) {
+                                var sss = '<tr>' +
+                                    '<td width="50px">' + data[t]["id"] + '</td>' +
+                                    '<td title="' + data[t]["file_name"] + '">' + data[t]["file_name"] + '</td>' +
+                                    '<td width="85px">' + data[t]["check_user"] + '</td>' +
+                                    '<td title="' + data[t]["ini_path"] + '">' + data[t]["ini_path"] + '</td>' +
+                                    '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                    '</tr>';
+                                all_str += sss;
+                            }
+                            $('#emp').empty();
+                            $(all_str).appendTo($('#emp'));
+                        } else {
+                            tm.get(0).innerText = 'not find data please try again !';
+                            tm.fadeIn('fast').fadeOut(5000);
+                        }
+                    }
+                })
+            }
+        }
+
+        function filterName() {
+            var name = $("input[name='targetUserName']:checked").val();
+            if (name) {
+                $.ajax({
+                    url: '/filter_name', method: 'post', data: {'name': name}, success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    let status_str = '';
+                                    if (data[t][7] == 'unfinished') {
+                                        status_str += '<td width="100px" bgcolor="#fa8072">' + data[t][7] + '</td>'
+                                    } else {
+                                        status_str += '<td width="100px" bgcolor="green">' + data[t][7] + '</td>'
+                                    }
+                                    var sss = '<tr>' +
+                                        '<td width="50px">' + data[t][0] + '</td>' +
+                                        '<td title="' + data[t][1] + '">' + GMTToStr(data[t][1]) + '</td>' +
+                                        '<td title="' + data[t][2] + '">' + data[t][2] + '</td>' +
+                                        '<td title="' + data[t][3] + '">' + data[t][3] + '</td>' +
+                                        '<td width="100px">' + data[t][4] + '</td>' +
+                                        '<td width="30%" title="' + data[t][5] + '">' + data[t][5] + '</td>' +
+                                        '<td width="50px">' + data[t][6] + '</td>' +
+                                        status_str +
+                                        '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                        '</tr>';
+                                    all_str += sss;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no user selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+        }
+
+        function filterTime() {
+            var s_time = $('#startTime').val();
+            var e_time = $('#endTime').val();
+            if (s_time && e_time) {
+                $.ajax({
+                    url: '/filter_time',
+                    method: 'post',
+                    data: {'s_time': s_time, 'e_time': e_time},
+                    success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    let status_str = '';
+                                    if (data[t][7] == 'unfinished') {
+                                        status_str += '<td width="100px" bgcolor="#fa8072">' + data[t][7] + '</td>'
+                                    } else {
+                                        status_str += '<td width="100px" bgcolor="green">' + data[t][7] + '</td>'
+                                    }
+                                    var sss = '<tr>' +
+                                        '<td width="50px">' + data[t][0] + '</td>' +
+                                        '<td title="' + data[t][1] + '">' + GMTToStr(data[t][1]) + '</td>' +
+                                        '<td title="' + data[t][2] + '">' + data[t][2] + '</td>' +
+                                        '<td title="' + data[t][3] + '">' + data[t][3] + '</td>' +
+                                        '<td width="100px">' + data[t][4] + '</td>' +
+                                        '<td width="30%" title="' + data[t][5] + '">' + data[t][5] + '</td>' +
+                                        '<td width="50px">' + data[t][6] + '</td>' +
+                                        status_str +
+                                        '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                        '</tr>';
+                                    all_str += sss;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no time selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+
+        }
+
+
+    </script>
+
+{% endblock %}

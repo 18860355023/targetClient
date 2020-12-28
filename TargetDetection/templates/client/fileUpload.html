@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="border: 1px solid lightcoral;margin: 0;" class="clearfix">
+    <div style="width: 50%;" class="pull-left clearfix">
+        <div class="pull-left" style="width: 30%;padding: 20px">
+            <div class="form-group">
+                <label for="ini_data_name">原始数据集命名</label>
+                <input type="text" id="ini_data_name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="data_field">数据集所属领域</label>
+                <select id="data_field" class="form-control">
+                    {% for field in data.fields %}
+                        <option value="{{ field.id }}">{{ field.field_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="cate_exits">数据集是否存在标注</label>
+                <div>
+                    <input type="radio" id="rtt" name="tg" value="true" checked onclick="nb_up_file()">
+                    <label for="rtt">是</label>
+                </div>
+                <div>
+                    <input type="radio" id="rff" value="false" name="tg" onclick="ban_up_file()">
+                    <label for="rff">否</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-inline pull-left clearfix" style="width: 70%">
+            <div class="form-group imt pull-left">
+                <label for="img_data">导入原始图片集</label>
+                <input type="file" id="img_data" webkitdirectory multiple onchange="imgData(this)">
+                <div id="img_name" style="height: 200px;overflow: auto"></div>
+            </div>
+            <div class="form-group imt pull-left">
+                <label for="target_data">导入标注文件集</label>
+                <input type="file" id="target_data" webkitdirectory multiple onchange="targetData(this)">
+                <div id="target_name" style="height: 200px;overflow: auto"></div>
+            </div>
+        </div>
+        <div class="btn btn-info form-control" onclick="submit_ini_data()">上传数据集</div>
+    </div>
+    <div class="pull-left form-group">
+        <label for="config_file">上传网络结构文件</label>
+        <input type="file" id="config_file" onchange="configFileUpload(this)" accept=".py">
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% block title %}{% endblock %}
+    </title>
+    <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="shortcut icon" href="#"/>
+    <script src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css">
+    <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+    {% block static %}{% endblock %}
+    {% block style %}{% endblock %}
+    <style>
+        body {
+            background-color: beige;
+        }
+
+        .mainBox {
+            background-color: white;
+            width: calc(100vw - 120px);
+            height: calc(100vh - 90px);
+            margin: 0 60px 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+            padding: 40px;
+        }
+
+        .mainCon {
+            width: calc(100vw - 500px);
+            background-color: whitesmoke;
+        }
+
+        .mmm > li {
+            list-style: none;
+            margin: 0;
+            padding: 0 20px;
+            border-bottom: 1px solid gainsboro;
+        }
+
+        .mmm > li:last-child {
+            list-style: none;
+            margin: 0;
+            padding: 0 20px;
+            border-bottom: 0;
+        }
+
+        .log-title {
+            color: grey;
+            font-size: 16px;
+            margin: 2px 5px;
+            height: 34px;
+            line-height: 34px;
+        }
+
+        .nav-top {
+            height: 50px;
+            line-height: 50px;
+            padding: 0 90px;
+        }
+
+        .fz {
+            color: lightcoral;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .usi {
+            border: 0;
+            height: 50px;
+            line-height: 50px;
+            margin-left: 5px;
+            color: grey;
+        }
+
+        .usi:last-child {
+            margin-left: 20px;
+        }
+
+        .dat-opt {
+        {#color: #31b0d5;#} color: seagreen;
+            width: 100%;
+            text-align: center;
+            border: 0;
+            cursor: pointer;
+            margin-top: -2px;
+        }
+
+        #j-tbody {
+        {#display: block;#} height: calc(100vh - 230px);
+        {#overflow: auto;#}{#overflow-y: scroll;#} background-color: aliceblue;
+        }
+
+        thead {
+            background-color: cornflowerblue;
+            color: whitesmoke;
+        }
+
+        thead, tbody tr {
+            width: 100%;
+        }
+
+        .option-nav {
+            margin-top: 34px;
+            width: 200px;
+            height: calc(100vh - 220px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+            background-color: #c0a16b;
+        }
+
+        .ul-nav {
+            margin-top: 40px;
+            height: calc(100vh - 220px);
+            overflow: auto;
+        }
+
+        .ul-nav li {
+            background-color: #c0a16b;
+            color: honeydew;
+            text-align: center;
+        }
+
+        .ul-nav li a {
+            text-decoration: none;
+            color: honeydew;
+        }
+
+        .ul-nav li:hover {
+            cursor: pointer;
+            background-color: cadetblue;
+        }
+    </style>
+</head>
+<body>
+<div class="nav-top clearfix">
+    <div class="pull-left fz">{% block nav_title %}{% endblock %}</div>
+    <div class="clearfix pull-right">
+        <span class="pull-left glyphicon glyphicon-user usi"></span>
+        <span class="pull-left usi username">{{ data.username }}</span>
+        <span class="usi"><a href="/logout">退出</a></span>
+    </div>
+</div>
+
+<div class="clearfix mainBox">
+    <div class="mainCon pull-left">
+        {% block mainbox %}
+
+        {% endblock %}
+    </div>
+</div>
+</body>
+<script>
+    $('.nav-list').click(function () {
+        $(this).get(0).firstChild.click();
+    });
+</script>
+</html>

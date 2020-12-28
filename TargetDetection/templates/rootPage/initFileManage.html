@@ -1,0 +1,167 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix" style="margin: 0">
+        <form style="width: 440px;margin: 10px 40px 40px 40px;position: relative" class="pull-left clearfix">
+            <div class="form-group">
+                <label for="f_path" style="font-size: 14px;">数据集本地/共享路径:</label>
+                <div class="form-inline">
+                    <input type="text" class="form-control" id="f_path" placeholder="请选择本地路径或者共享文件路径"
+                           onblur="fPathCheck()" style="width: 340px" disabled>
+                    <div class="btn btn-success form-control" onclick="openTkinter()">选取路径</div>
+                </div>
+                <p id="path-error" style="color:red;font-size: 10px;"></p>
+            </div>
+            <div class="form-group">
+                <label for="fPath" style="font-size: 14px;">设置类别:</label>
+                <span style="display: inline-block;height: 16px;line-height: 16px;width: 23px;border: 1px solid gainsboro;text-align: center;cursor: pointer;background-color:lemonchiffon;margin-left: 20px;color: grey"
+                      onclick="addCategory()">+</span>
+                <div style="height: calc(100vh - 320px);overflow: auto;padding: 16px;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+                    {% for cat in range(0,data.cats | length,3) %}
+                        <div class="clearfix">
+                            {% if data.cats[cat] %}
+                                <p style="width: 33.3%;overflow: hidden" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.cats[cat].category_name }}"> {{ data.cats[cat].category_name }}
+                                </p>
+                            {% endif %}
+                            {% if data.cats[cat + 1] %}
+                                <p style="width: 33.3%;overflow:hidden;" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.cats[cat + 1].category_name }}"> {{ data.cats[cat + 1].category_name }}
+                                </p>
+                            {% endif %}
+                            {% if data.cats[cat + 2] %}
+                                <p style="width: 33.3%;overflow:hidden;" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.cats[cat + 2].category_name }}"> {{ data.cats[cat + 2].category_name }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="tip-error" style="color: red;font-size: 12px;margin-left: 14px;"></p>
+            <div class="form-group">
+                <div class="btn btn-info" style="width: 100%" onclick="addIniPath()">添加路径</div>
+            </div>
+        </form>
+        <table class="table table-hover table-bordered table-striped pull-left" id="ini-file"
+               style="width: calc(100vw - 500px - 440px);margin-top: 20px;">
+            <thead>
+            <tr>
+                <th width="50px">id</th>
+                <th width="100px">ini-name</th>
+                <th>ini-path</th>
+                <th>category</th>
+                <th width="50px">num</th>
+                <th width="80px">option</th>
+                <th class="last" style="width: 17px"></th>
+            </tr>
+            </thead>
+            <tbody id="emp" style="height: calc(100vh - 220px);overflow: auto;overflow-y: scroll;">
+            {% for task in data.cate_tables %}
+                <tr>
+                    <td width="50px">{{ task.id }}</td>
+                    <td width="100px">{{ task.name }}</td>
+                    <td>{{ task.path }}</td>
+                    <td>{{ task.category }}</td>
+                    <td width="50px">{{ task.file_num }}</td>
+                    <td width="80px">
+                        <button style="border: 0;background-color:red;color: white;"
+                                onclick="deleteIni($(this))">delete
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+
+    <script>
+
+        function fPathCheck() {
+            console.log('shiqujiaodian');
+            {#var fPath = $('#fPath').val();#}
+            var error = $('#path-error').get(0);
+            $('#fPath').val() == '' ? error.innerText = 'error: 文件路径不能为空' : error.innerText = '';
+        }
+
+        function addCategory() {
+            console.log('jdhfd');
+            var cate = prompt("请输入类别名");
+            if (cate) {
+                $.ajax({
+                    url: '/add_cate', method: 'post', data: {'cate': cate}, success: function (res) {
+                        console.log(res);
+                        location.reload()
+                    }
+                })
+            }
+        }
+
+
+        function addIniPath() {
+            var addr = $('#f_path').val();
+            let cate_list = [];
+            let ss = $('input[name=target]:checked');
+            {#console.log(ss);#}
+            for (var i = 0; i < ss.length; i++) {
+                cate_list.push(ss[i].value)
+            }
+            var cate_str = cate_list.join(',');
+            if (addr && cate_list.length > 0) {
+                $.ajax({
+                    url: '/add_ini_path',
+                    method: 'post',
+                    data: {'addr': addr, 'cate_str': cate_str},
+                    success: function (data) {
+                        console.log(data);
+                        if (data == 200) {
+                            location.reload()
+                        } else {
+                            $('.tip-error').get(0).innerText = data;
+                        }
+                    }
+                })
+            } else {
+                $('.tip-error').get(0).innerText = '文件路径和类别不能为空';
+            }
+        }
+
+        function deleteIni($this) {
+            var nid = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/delete_ini', method: 'post', data: {'id': nid}, success: function (data) {
+                    {#console.log(data);#}
+                    location.reload()
+                }
+            })
+        }
+
+        function openTkinter() {
+            $.ajax({
+                url: '/open_tk', method: 'get', success: function (data) {
+                    if (data) {
+                        $('#f_path').get(0).value = data;
+                    }
+                }
+            })
+        }
+
+
+    </script>
+
+{% endblock %}

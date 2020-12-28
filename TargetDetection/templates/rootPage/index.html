@@ -1,0 +1,474 @@
+{% extends 'rootPage/rootBase.html' %}
+{% block auth %}
+    <div class="clearfix">
+        <span class="pull-left" style="
+            display:inline-block;height: 40px;line-height: 40px;width: 40px;background-image:url(/static/images/user.png);
+            background-repeat: no-repeat;-webkit-background-size: 100%;background-size: 100%;margin-right: 8px;"></span>
+        <span class="pull-left"
+              style="font-size: 16px;margin-right: 40px;display:inline-block;height: 40px;line-height: 40px;padding-top: 2px;">{{ data.username }}</span>
+        <a href="/logout"
+           style="font-size: 16px;margin-right: 20px;display:inline-block;height: 40px;line-height: 40px;padding-top: 4px;">退出</a>
+    </div>
+{% endblock %}
+{% block navContent %}
+    <div class="clearfix" style="margin: 0">
+        <form style="width: 260px;margin: 10px 40px 40px 10px;height: calc(100vh - 120px);overflow: auto"
+              class="pull-left clearfix">
+            <div class="form-group" style="margin-top: 40px;">
+                <label for="fPath">选取来源文件夹路径:</label>
+                <select class="form-control" name="" id="fPath" style="width:260px;overflow: hidden"
+                        onchange="changePath($(this))">
+                    {% for fp in data.init_lists %}
+                        <option value="{{ fp.path }}">{{ fp.path }}</option>
+                    {% endfor %}
+                </select>
+                <p id="path-error" style="color:red;font-size: 10px;"></p>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注人员:</label>
+                <div style="height: calc(100vh - 540px);overflow: auto;padding: 16px;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+                    {% for user in range(0,data.target_users | length,2) %}
+                        <div class="clearfix">
+                            {% if data.target_users[user] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user][0] }}"> {{ data.target_users[user][0] }}
+                                </p>
+                            {% endif %}
+                            {% if data.target_users[user + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="target"
+                                           value="{{ data.target_users[user + 1][0] }}"> {{ data.target_users[user + 1][0] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">选择标注类别:</label>
+                <div id="cateDiv"
+                     style="height: 130px;overflow: auto;padding: 16px;box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);">
+                    {% for cate in range(0,data.default_cate_list|length,2) %}
+                        <div class="clearfix">
+                            {% if data.default_cate_list[cate] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.default_cate_list[cate] }}"> {{ data.default_cate_list[cate] }}
+                                </p>
+                            {% endif %}
+                            {% if data.default_cate_list[cate + 1] %}
+                                <p style="width: 50%" class="pull-left">
+                                    <input type="checkbox" name="cate"
+                                           value="{{ data.default_cate_list[cate + 1] }}"> {{ data.default_cate_list[cate + 1] }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="">是否交叉标注:</label>
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="true"> 是
+                <input type="radio" class="form-inline" name="people" style="margin-left: 10px;" value="false" checked>
+                否
+            </div>
+            <p class="none-error" style="color:red;font-size: 10px;"></p>
+            <div class="form-group">
+                <button type="button" class="btn btn-info form-control" onclick="assignedTask()">随机均等分配任务</button>
+            </div>
+        </form>
+
+        <div class="pull-left"
+             style="margin-top: 50px;width:calc(100vw - 750px);box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);overflow-x: auto;">
+            <form class="form-inline clearfix">
+                <p class="form-group pull-left" style="margin-right: 100px;">
+                    <select name="filter" id="" class="form-control" onchange="filterLabel($(this))">
+                        <option value="time" selected>按时间筛选</option>
+                        <option value="name">按用户名筛选</option>
+                        <option value="path">按初始路径筛选</option>
+                    </select>
+                </p>
+                <div class="form-group filter-time pull-left">
+                    <label for="startTime">start time</label>
+                    <input type="date" class="form-control" id="startTime" placeholder="开始时间">
+                    <label for="endTime">end time</label>
+                    <input type="date" class="form-control" id="endTime" placeholder="结束时间">
+                    <div class="btn btn-info" onclick="filterTime()">search</div>
+                </div>
+                <div class="form-inline filter-name pull-left"
+                     style="border: 1px solid gainsboro;height:34px;display: none">
+                    {% for user in data.target_users %}
+                        <div style="margin: 0 10px;" class="form-group clearfix">
+                            <input type="radio" name="targetUserName" class="pull-left" value="{{ user[0] }}">
+                            <span class="pull-left" style="margin: 0 5px;">{{ user[0] }}</span>
+                        </div>
+                    {% endfor %}
+                    <div class="form-control btn-info" style="cursor: pointer" onclick="filterName()">search</div>
+                </div>
+                <div class="form-group filter-path pull-left" style="display: none">
+                    <label for="initPath">init path</label>
+                    <select name="" id="initPath" class="form-control" onchange="filterPath($(this))">
+                        <option value="null">请选择要查询的路径</option>
+                        {% for fpt in data.init_lists %}
+                            <option value="{{ fpt.path }}">{{ fpt.path }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group tip-msg"
+                     style="display: none;color: red;margin-left: 20px;height: 34px;line-height: 34px"></div>
+            </form>
+            <table class="table table-hover table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th width="50px">ID</th>
+                    <th>Time</th>
+                    <th>Name</th>
+                    <th>UserStatus</th>
+                    <th width="100px">CheckUser</th>
+                    <th width="30%">Path</th>
+                    <th width="50px">NUM</th>
+                    <th width="100px">TaskStatus</th>
+                    <th width="80px">Option</th>
+                </tr>
+                </thead>
+                {% if data.task_list %}
+                    <tbody id="emp" style="height: calc(100vh - 340px);overflow: auto">
+                    {% for task in data.task_list %}
+                        <tr>
+                            <td width="50px">{{ task.id }}</td>
+                            <td>{{ task.addtime }}</td>
+                            <td>{{ task.task_name }}</td>
+                            <td>{{ task.target_user_status }}</td>
+                            {% if task.check_user %}
+                                <td width="100px" ondblclick="editCheck($(this))">{{ task.check_user }}</td>
+                            {% else %}
+                                <td width="100px">
+                                    <select name="" id="" class="checkUser"
+                                            onchange="selectedCheckUser($(this))">
+                                        <option value="null">未选择</option>
+                                        {% for user in data.check_users %}
+                                            <option value="{{ user[0] }}">{{ user[0] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            {% endif %}
+                            <td width="30%" title="{{ task.task_path }}">{{ task.task_path }}</td>
+                            <td width="50px">{{ task.file_num }}</td>
+                            {% if task.task_status=='unfinished' %}
+                                <td width="100px" bgcolor="#fa8072">{{ task.task_status }}</td>
+                            {% else %}
+                                <td width="100px" bgcolor="green">{{ task.task_status }}</td>
+                            {% endif %}
+                            <td width="80px">
+                                <button style="border: 0;background-color:red;color: white;"
+                                        onclick="deleteTask($(this))">delete
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% else %}
+                    <tbody id="emp" style="height: calc(100vh - 360px);overflow: auto"></tbody>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <script>
+
+        let tm = $('.tip-msg');
+
+        function GMTToStr(time) {
+            let date = new Date(time);
+            let ss = date.getFullYear() + '-' +
+                (date.getMonth() + 1) + '-' +
+                date.getDate() + ' ' +
+                date.getHours() + ':' +
+                date.getMinutes() + ':' +
+                date.getSeconds();
+            return ss
+        }
+
+        /**
+         $('.nav-option').click(function () {
+            {#console.log($(this).text());#}
+            var labels = $(this).siblings();
+            {#console.log(labels.length);#}
+            for (var i = 0; i < labels.length; i++) {
+                console.log(labels.get(i));
+                labels.get(i).classList.remove('active')
+            }
+
+            $(this).addClass('active');
+            $.ajax({
+                url: '/change_label', method: 'post', data: {'path': $(this).text()}, success: function (data) {
+                    $('#emp').empty();
+                    for (var task in data) {
+                        {#console.log(data[task]);#}
+                        var a_time = GMTToStr(data[task]['time']);
+                        var tr_dom = '<tr><td>' + a_time + '</td><td>' + data[task]['name'] + '</td><td>' + data[task]['user'] + '</td><td>' + data[task]['path'] + '</td><td>' + data[task]['num'] + '</td><td>' + data[task]['status'] + '</td></tr>';
+                        $(tr_dom).appendTo($('#emp'));
+                    }
+                }
+            })
+        });
+         **/
+        function selectedList(node_list) {
+            var re_list = [];
+            for (var i = 0; i < node_list.length; i++) {
+                re_list.push(node_list[i].value)
+            }
+            return re_list
+        }
+
+        function assignedTask() {
+            var addr = $('#fPath option:checked').val();
+            {#console.log(addr);#}
+            {#let nameList = [];#}
+            var ss = $('input[name=target]:checked');
+            var nameList = selectedList(ss);
+            {#console.log(nameList);#}
+            var nst = $('input[name=cate]:checked');
+            var cateList = selectedList(nst);
+            {#console.log(cateList);#}
+            var count = $("input[name='people']:checked").val();
+            {#console.log(count);#}
+
+            if (addr != '' && nameList.length > 0 && cateList.length > 0 && count) {
+                $('.none-error').get(0).innerText = '';
+                $.ajax({
+                    url: '/up_task',
+                    method: 'post',
+                    data: {
+                        'addr': addr,
+                        'nameList': JSON.stringify(nameList),
+                        'cateList': JSON.stringify(cateList),
+                        'count': count
+                    },
+                    success: function (data) {
+                        if (data == 'ok') {
+                            location.reload()
+                        }
+                    }
+                })
+            } else {
+                $('.none-error').get(0).innerText = 'error: 路径和标注人员不能为空'
+            }
+        }
+
+        function changePath($this) {
+            $('#cateDiv').empty();
+            var path = $this.val();
+            $.ajax({
+                url: '/get_path_cate', method: 'post', data: {'path': path}, success: function (data) {
+                    console.log(data);
+                    if (data) {
+                        let str1 = '';
+                        let str2 = '';
+                        let str3 = '';
+                        for (var i = 0; i < data.length; i += 2) {
+                            if (data[i]) {
+                                var st1 = '<p style="width: 50%" class="pull-left"><input type="checkbox" name="cate" value="' + data[i] + '"> ' + data[i] + '</p>';
+                                str1 += st1;
+                            }
+                            if (data[i + 1]) {
+                                var st2 = '<p style="width: 50%" class="pull-left"><input type="checkbox" name="cate" value="' + data[i + 1] + '"> ' + data[i + 1] + '</p>';
+                                str2 += st2;
+                            }
+                            str3 = str1 + str2;
+                        }
+                        $(str3).appendTo($('#cateDiv'))
+                    }
+                }
+            })
+        }
+
+
+        function selectedCheckUser($this) {
+            console.log($this.val());
+            var v = $this.val();
+            var id = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: 'set_check_user', method: 'post', data: {'id': id, 'name': v}, success: function (data) {
+                    console.log(data);
+                    if (data == 200) {
+                        location.reload()
+                    }
+                }
+            })
+        }
+
+        function filterLabel($this) {
+            var vv = $this.val();
+            if (vv == 'name') {
+                $('.filter-name').get(0).style.display = 'block';
+                $('.filter-time').get(0).style.display = 'none';
+                $('.filter-path').get(0).style.display = 'none';
+            } else if (vv == 'path') {
+                $('.filter-name').get(0).style.display = 'none';
+                $('.filter-time').get(0).style.display = 'none';
+                $('.filter-path').get(0).style.display = 'block';
+            } else {
+                $('.filter-name').get(0).style.display = 'none';
+                $('.filter-time').get(0).style.display = 'block';
+                $('.filter-path').get(0).style.display = 'none';
+            }
+        }
+
+        function deleteTask($this) {
+            console.log($this.parent().siblings()[0].innerText);
+            var nid = $this.parent().siblings()[0].innerText;
+            $.ajax({
+                url: '/delete_task', method: 'post', data: {'id': nid}, success: function (data) {
+                    {#console.log(data);#}
+                    location.reload()
+                }
+            })
+        }
+
+        function filterPath($this) {
+            var path = $this.val();
+            if (path && path != 'null') {
+                $.ajax({
+                    url: '/filter_path', method: 'post', data: {'path': path}, success: function (data) {
+                        if (data.length > 0) {
+                            tm.get(0).innerText = 'search data success !';
+                            tm.fadeIn('fast').fadeOut(2000);
+                            let all_str = '';
+                            for (var t in data) {
+                                let status_str = '';
+                                if (data[t][7] == 'unfinished') {
+                                    status_str += '<td width="100px" bgcolor="#fa8072">' + data[t][7] + '</td>'
+                                } else {
+                                    status_str += '<td width="100px" bgcolor="green">' + data[t][7] + '</td>'
+                                }
+                                var sss = '<tr>' +
+                                    '<td width="50px">' + data[t][0] + '</td>' +
+                                    '<td title="' + data[t][1] + '">' + GMTToStr(data[t][1]) + '</td>' +
+                                    '<td title="' + data[t][2] + '">' + data[t][2] + '</td>' +
+                                    '<td title="' + data[t][3] + '">' + data[t][3] + '</td>' +
+                                    '<td width="100px">' + data[t][4] + '</td>' +
+                                    '<td width="30%" title="' + data[t][5] + '">' + data[t][5] + '</td>' +
+                                    '<td width="50px">' + data[t][6] + '</td>' +
+                                    status_str +
+                                    '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                    '</tr>';
+                                all_str += sss;
+                            }
+                            $('#emp').empty();
+                            $(all_str).appendTo($('#emp'));
+                        } else {
+                            tm.get(0).innerText = 'not find data please try again !';
+                            tm.fadeIn('fast').fadeOut(5000);
+                        }
+                    }
+                })
+            }
+        }
+
+        function filterName() {
+            var name = $("input[name='targetUserName']:checked").val();
+            if (name) {
+                $.ajax({
+                    url: '/filter_name', method: 'post', data: {'name': name}, success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    let status_str = '';
+                                    if (data[t][7] == 'unfinished') {
+                                        status_str += '<td width="100px" bgcolor="#fa8072">' + data[t][7] + '</td>'
+                                    } else {
+                                        status_str += '<td width="100px" bgcolor="green">' + data[t][7] + '</td>'
+                                    }
+                                    var sss = '<tr>' +
+                                        '<td width="50px">' + data[t][0] + '</td>' +
+                                        '<td title="' + data[t][1] + '">' + GMTToStr(data[t][1]) + '</td>' +
+                                        '<td title="' + data[t][2] + '">' + data[t][2] + '</td>' +
+                                        '<td title="' + data[t][3] + '">' + data[t][3] + '</td>' +
+                                        '<td width="100px">' + data[t][4] + '</td>' +
+                                        '<td width="30%" title="' + data[t][5] + '">' + data[t][5] + '</td>' +
+                                        '<td width="50px">' + data[t][6] + '</td>' +
+                                        status_str +
+                                        '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                        '</tr>';
+                                    all_str += sss;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no user selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+        }
+
+        function filterTime() {
+            var s_time = $('#startTime').val();
+            var e_time = $('#endTime').val();
+            if (s_time && e_time) {
+                $.ajax({
+                    url: '/filter_time',
+                    method: 'post',
+                    data: {'s_time': s_time, 'e_time': e_time},
+                    success: function (data) {
+                        if (data != 'error') {
+                            if (data.length > 0) {
+                                tm.get(0).innerText = 'search data success !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                                let all_str = '';
+                                for (var t in data) {
+                                    let status_str = '';
+                                    if (data[t][7] == 'unfinished') {
+                                        status_str += '<td width="100px" bgcolor="#fa8072">' + data[t][7] + '</td>'
+                                    } else {
+                                        status_str += '<td width="100px" bgcolor="green">' + data[t][7] + '</td>'
+                                    }
+                                    var sss = '<tr>' +
+                                        '<td width="50px">' + data[t][0] + '</td>' +
+                                        '<td title="' + data[t][1] + '">' + GMTToStr(data[t][1]) + '</td>' +
+                                        '<td title="' + data[t][2] + '">' + data[t][2] + '</td>' +
+                                        '<td title="' + data[t][3] + '">' + data[t][3] + '</td>' +
+                                        '<td width="100px">' + data[t][4] + '</td>' +
+                                        '<td width="30%" title="' + data[t][5] + '">' + data[t][5] + '</td>' +
+                                        '<td width="50px">' + data[t][6] + '</td>' +
+                                        status_str +
+                                        '<td width="80px"><button class="btn-danger" onclick="deleteTask($(this))">delete</button></td>' +
+                                        '</tr>';
+                                    all_str += sss;
+                                }
+                                $('#emp').empty();
+                                $(all_str).appendTo($('#emp'));
+                            } else {
+                                tm.get(0).innerText = 'no return value !';
+                                tm.fadeIn('fast').fadeOut(2000);
+                            }
+                        } else {
+                            tm.get(0).innerText = 'search data error please try again !';
+                            tm.fadeIn('fast').fadeOut(4000);
+                        }
+                    }
+                })
+            } else {
+                tm.get(0).innerText = 'no time selected !';
+                tm.fadeIn('fast').fadeOut(5000);
+            }
+
+        }
+
+
+    </script>
+
+{% endblock %}
